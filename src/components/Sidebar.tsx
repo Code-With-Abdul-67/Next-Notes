@@ -1,0 +1,192 @@
+"use client";
+
+import { Folder, Lock, Trash2, LogOut, Plus, ChevronLeft, ChevronRight, Menu } from "lucide-react";
+import { Button, Avatar, User } from "@nextui-org/react";
+import { motion } from "framer-motion";
+import { signOut } from "next-auth/react";
+import { useState } from "react";
+
+interface SidebarProps {
+  currentView: "all" | "vault" | "bin";
+  onViewChange: (view: "all" | "vault" | "bin") => void;
+  onNewNote: () => void;
+  user: {
+    name?: string | null;
+    email?: string | null;
+    image?: string | null;
+  };
+  hasVaultPassword: boolean;
+  onDeleteVault: () => void;
+}
+
+export default function Sidebar({ currentView, onViewChange, onNewNote, user, hasVaultPassword, onDeleteVault }: SidebarProps) {
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  const navItems = [
+    { id: "all", label: "All Notes", icon: Folder },
+    { id: "vault", label: "Secret Vault", icon: Lock },
+    { id: "bin", label: "Recycle Bin", icon: Trash2 },
+  ] as const;
+
+  const handleNavClick = (view: "all" | "vault" | "bin") => {
+    onViewChange(view);
+    setMobileOpen(false);
+  };
+
+  const SidebarContent = () => (
+    <div className="flex flex-col h-full justify-between p-4">
+      <div className="space-y-6">
+        {/* Brand Logo Header */}
+        <div className="flex items-center gap-3 px-2 py-3 border-b border-white/5">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center font-bold text-white shadow-lg shadow-purple-500/20">
+            N
+          </div>
+          {!isCollapsed && (
+            <span className="font-bold text-lg bg-gradient-to-r from-white to-white/70 bg-clip-text text-transparent">
+              Next Notes
+            </span>
+          )}
+        </div>
+
+        {/* Create Note Quick Action */}
+        <Button
+          color="primary"
+          className={`w-full font-semibold shadow-lg shadow-purple-500/20 bg-primary ${isCollapsed ? "min-w-0 p-0 h-10 w-10" : ""
+            }`}
+          onClick={onNewNote}
+          startContent={<Plus size={18} />}
+        >
+          {!isCollapsed && "New Note"}
+        </Button>
+
+        {/* Navigation items */}
+        <nav className="space-y-1">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = currentView === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => handleNavClick(item.id)}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${isActive
+                    ? "bg-primary/20 text-purple-300 border border-primary/20"
+                    : "text-white/60 hover:text-white hover:bg-white/5 border border-transparent"
+                  }`}
+              >
+                <Icon size={18} className={isActive ? "text-purple-400" : ""} />
+                {!isCollapsed && <span>{item.label}</span>}
+              </button>
+            );
+          })}
+        </nav>
+
+        {/* Vault Actions */}
+        {hasVaultPassword && (
+          <div className="pt-4 mt-2 border-t border-white/5">
+            <button
+              onClick={onDeleteVault}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 text-red-400/80 hover:text-red-400 hover:bg-red-500/10 border border-transparent"
+              title="Delete Vault"
+            >
+              <Trash2 size={18} />
+              {!isCollapsed && <span>Delete Vault</span>}
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* User profile & signout */}
+      <div className="space-y-4 border-t border-white/5 pt-4">
+        {!isCollapsed ? (
+          <div className="flex items-center justify-between gap-2 px-1">
+            <User
+              name={user.name || "User"}
+              description={user.email || ""}
+              avatarProps={{
+                src: user.image || "",
+                className: "border border-purple-500/30",
+              }}
+              classNames={{
+                name: "text-white/90 text-sm font-semibold",
+                description: "text-white/40 text-xs truncate max-w-[120px]",
+              }}
+            />
+            <Button
+              isIconOnly
+              size="sm"
+              variant="light"
+              color="danger"
+              className="text-white/40 hover:text-red-400 hover:bg-red-500/10 rounded-lg"
+              onClick={() => signOut()}
+            >
+              <LogOut size={16} />
+            </Button>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center gap-3">
+            <Avatar src={user.image || ""} size="sm" className="border border-purple-500/30" />
+            <Button
+              isIconOnly
+              size="sm"
+              variant="light"
+              color="danger"
+              className="text-white/40 hover:text-red-400 hover:bg-red-500/10 rounded-lg"
+              onClick={() => signOut()}
+            >
+              <LogOut size={16} />
+            </Button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  return (
+    <>
+      {/* Mobile topbar */}
+      <div className="md:hidden w-full flex items-center justify-between px-4 py-3 glass-panel border-x-0 border-t-0 sticky top-0 z-40">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center font-bold text-white">
+            N
+          </div>
+          <span className="font-bold text-white">Next Notes</span>
+        </div>
+        <Button isIconOnly variant="light" className="text-white" onClick={() => setMobileOpen(!mobileOpen)}>
+          <Menu size={20} />
+        </Button>
+      </div>
+
+      {/* Mobile Sidebar overlay Drawer */}
+      {mobileOpen && (
+        <div className="md:hidden fixed inset-0 z-50 flex">
+          {/* backdrop */}
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
+
+          <div className="relative flex flex-col w-64 h-full glass-panel border-y-0 border-l-0">
+            <SidebarContent />
+          </div>
+        </div>
+      )}
+
+      {/* Desktop Sidebar */}
+      <motion.aside
+        initial={false}
+        animate={{ width: isCollapsed ? 80 : 256 }}
+        className="hidden md:flex flex-col border-r border-white/5 h-screen sticky top-0 z-30 bg-black/20 backdrop-blur-md"
+      >
+        <div className="relative h-full flex flex-col">
+          {/* Collapse toggle button */}
+          <button
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="absolute -right-3 top-10 w-6 h-6 rounded-full bg-purple-900 border border-white/10 hover:border-purple-500/50 flex items-center justify-center text-white/80 hover:text-white transition-all z-50 cursor-pointer"
+          >
+            {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+          </button>
+
+          <SidebarContent />
+        </div>
+      </motion.aside>
+    </>
+  );
+}
