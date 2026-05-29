@@ -84,15 +84,15 @@ export default function NoteCard({
       <div
         onClick={handleCardClick}
         className={`group relative overflow-hidden glass-card w-full h-48 flex flex-col justify-between rounded-xl border border-white/5 bg-white/5 backdrop-blur-md shadow-lg transition-all duration-300 ${
-          view !== "bin" ? "cursor-pointer hover:bg-white/10 hover:border-white/20 hover:shadow-purple-500/5" : ""
+          view !== "bin" 
+            ? "cursor-pointer hover:bg-white/10 hover:border-white/20 hover:shadow-purple-500/5" 
+            : "hover:bg-white/10 hover:border-white/20 hover:shadow-purple-500/5"
         }`}
       >
-        {/* Animated Light Sheen Reflective Ray Effect */}
-        {view !== "bin" && (
-          <div className="absolute inset-0 pointer-events-none z-0">
-            <div className="absolute -inset-full top-0 block w-1/2 h-full bg-gradient-to-r from-transparent via-white/[0.06] to-transparent skew-x-12 transform -translate-x-full transition-transform duration-1000 ease-out group-hover:translate-x-[400%]" />
-          </div>
-        )}
+        {/* Animated Light Sheen Reflective Ray Effect (Ab yeh bin view samet sab par chalega) */}
+        <div className="absolute inset-0 pointer-events-none z-0">
+          <div className="absolute -inset-full top-0 block w-1/2 h-full bg-gradient-to-r from-transparent via-white/[0.06] to-transparent skew-x-12 transform -translate-x-full transition-transform duration-1000 ease-out group-hover:translate-x-[400%]" />
+        </div>
 
         {/* Content Container */}
         <div className="relative z-10 flex flex-col justify-between h-full w-full">
@@ -143,7 +143,7 @@ export default function NoteCard({
             className="flex justify-between items-center bg-black/10 border-t border-white/5 py-2.5 px-4"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Hover karne par calendar icon aur full text color transition ke sath purple ho jaega */}
+            {/* Hover transitions for full timestamp block */}
             <div className="flex items-center gap-1.5 text-[10px] text-white/40 transition-colors duration-300 group-hover:text-purple-300">
               <Calendar size={11} className="text-white/30 transition-colors duration-300 group-hover:text-purple-400" />
               <span>{fullTimestamp}</span>

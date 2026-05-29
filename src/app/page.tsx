@@ -150,7 +150,7 @@ function LoginScreen() {
           transition={{ delay: 0.7 }}
           className="mt-6 text-[10px] text-white/30 leading-relaxed"
         >
-          By signing in you agree to Next Notes terms.
+          By signing in you agree to NEXT Notes terms.
           <br />
           Your data is securely stored with end-to-end encryption.
         </motion.p>

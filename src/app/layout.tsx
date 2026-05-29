@@ -6,13 +6,13 @@ import { Providers } from "./providers";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Next Notes - Premium Secure Workspace",
+  title: "NEXT Notes - Premium Secure Workspace",
   description: "A secure, beautiful glassmorphism Notes web application with private vault security.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Next Notes",
+    title: "NEXT Notes",
   },
   other: {
     "mobile-web-app-capable": "yes",

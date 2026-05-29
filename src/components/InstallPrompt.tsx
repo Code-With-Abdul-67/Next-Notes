@@ -76,7 +76,7 @@ export default function InstallPrompt() {
             <div className="p-2 bg-primary/10 text-primary rounded-lg">
               <Download size={20} />
             </div>
-            <h4 className="font-semibold text-white">Install Next Notes</h4>
+            <h4 className="font-semibold text-white">Install NEXT Notes</h4>
           </div>
           <button
             onClick={handleDismiss}
@@ -87,7 +87,7 @@ export default function InstallPrompt() {
         </div>
 
         <p className="text-sm text-white/70 mb-4 leading-relaxed">
-          Install Next Notes on your device for full-screen workspace, faster loading, and offline note-taking access.
+          Install NEXT Notes on your device for full-screen workspace, faster loading, and offline note-taking access.
         </p>
 
         {isIOS ? (
