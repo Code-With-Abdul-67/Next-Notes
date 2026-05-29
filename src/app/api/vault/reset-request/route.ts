@@ -34,16 +34,7 @@ export async function POST(request: Request) {
       },
     });
 
-    // Send code to user's registered email
-    const mailResult = await sendVerificationCode(email, code);
-
-    return NextResponse.json({ 
-      success: true, 
-      warning: !mailResult.success ? mailResult.error : undefined,
-      message: mailResult.success 
-        ? "Verification code sent to your email" 
-        : `Verification code generated. (Dev Mode: check terminal console logs for code)`
-    });
+   
   } catch (error) {
     console.error("Vault reset request error:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
