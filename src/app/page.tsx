@@ -5,6 +5,8 @@ import { useEffect } from "react";
 import { Button, Spinner } from "@nextui-org/react";
 import { motion } from "framer-motion";
 import Dashboard from "@/components/Dashboard";
+import Image from 'next/image';
+
 
 export default function HomePage() {
   const { data: session, status } = useSession();
@@ -78,7 +80,16 @@ function LoginScreen() {
           transition={{ delay: 0.2, type: "spring", stiffness: 200, damping: 12 }}
           className="mx-auto w-20 h-20 rounded-2xl bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center text-white text-3xl font-extrabold mb-6 shadow-xl shadow-purple-500/25"
         >
-          N
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center text-white">
+            <Image
+              src="/favicon.ico"
+              alt="Logo"
+              width={24}
+              height={24}
+              className="object-contain"
+            />
+          </div>
+
         </motion.div>
 
         <motion.h1
