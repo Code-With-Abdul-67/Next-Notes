@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { Input, Spinner } from "@nextui-org/react";
 import { Search, FileText, Trash2, Lock } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -47,9 +47,9 @@ export default function Dashboard() {
   const [hasVaultPassword, setHasVaultPassword] = useState(false);
   const [vaultChecked, setVaultChecked] = useState(false);
 
-  // Confirmation Modals
+  // Confirmation Modals (Updated with deleteAccount)
   const [confirmAction, setConfirmAction] = useState<{
-    type: "vault" | "unlock" | "bin" | "delete" | "deleteVault";
+    type: "vault" | "unlock" | "bin" | "delete" | "deleteVault" | "deleteAccount";
     id: string;
     currentVal?: boolean;
   } | null>(null);
@@ -210,6 +210,10 @@ export default function Dashboard() {
     setConfirmAction({ type: "deleteVault", id: "" });
   };
 
+  const handleDeleteAccount = () => {
+    setConfirmAction({ type: "deleteAccount", id: "" });
+  };
+
   const handleNewNote = () => {
     setEditingNote(null);
     setEditorOpen(true);
@@ -241,6 +245,7 @@ export default function Dashboard() {
         onNewNote={handleNewNote}
         hasVaultPassword={hasVaultPassword}
         onDeleteVault={handleDeleteVault}
+        onDeleteAccount={handleDeleteAccount}
         user={{
           name: session?.user?.name,
           email: session?.user?.email,
@@ -377,6 +382,17 @@ export default function Dashboard() {
                   }
                 })
                 .catch(console.error);
+            } else if (confirmAction.type === "deleteAccount") {
+              // Assumed API route for user deletion. Adjust if your endpoint is different.
+              fetch("/api/user", { method: "DELETE" })
+                .then((res) => {
+                  if (res.ok) {
+                    signOut({ callbackUrl: "/" });
+                  } else {
+                    console.error("Failed to delete account");
+                  }
+                })
+                .catch(console.error);
             }
             setConfirmAction(null);
           }}
@@ -389,6 +405,8 @@ export default function Dashboard() {
               ? "Move to Recycle Bin?"
               : confirmAction.type === "deleteVault"
               ? "Delete Vault Permanently?"
+              : confirmAction.type === "deleteAccount"
+              ? "Delete Account Permanently?"
               : "Delete Permanently?"
           }
           message={
@@ -400,6 +418,8 @@ export default function Dashboard() {
               ? "Are you sure you want to move this note to the Recycle Bin? You can recover it later."
               : confirmAction.type === "deleteVault"
               ? "Are you sure you want to completely destroy the vault? This instantly wipes out your master setup and removes all locked notes forever."
+              : confirmAction.type === "deleteAccount"
+              ? "Are you sure you want to permanently delete your account? All of your notes, your vault, and your data will be wiped out immediately. This action cannot be undone."
               : "Are you sure you want to permanently delete this note? This action cannot be undone."
           }
           confirmText={
@@ -411,9 +431,11 @@ export default function Dashboard() {
               ? "Move"
               : confirmAction.type === "deleteVault"
               ? "Wipe Vault"
+              : confirmAction.type === "deleteAccount"
+              ? "Delete Account"
               : "Delete"
           }
-          isDestructive={confirmAction.type === "delete" || confirmAction.type === "deleteVault"}
+          isDestructive={confirmAction.type === "delete" || confirmAction.type === "deleteVault" || confirmAction.type === "deleteAccount"}
         />
       )}
     </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { Folder, Lock, Trash2, LogOut, Plus, ChevronLeft, ChevronRight, Menu, UserX } from "lucide-react";
+import { Folder, Lock, Trash2, LogOut, Plus, ChevronLeft, ChevronRight, Menu, UserX, AlertTriangle } from "lucide-react";
 import { Button, Avatar, User, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from "@nextui-org/react";
 import { motion } from "framer-motion";
 import { signOut } from "next-auth/react";
@@ -18,10 +18,18 @@ interface SidebarProps {
   };
   hasVaultPassword: boolean;
   onDeleteVault: () => void;
-  onDeleteAccount?: () => void; // Added prop for account deletion handler
+  onDeleteAccount?: () => void;
 }
 
-export default function Sidebar({ currentView, onViewChange, onNewNote, user, hasVaultPassword, onDeleteVault, onDeleteAccount }: SidebarProps) {
+export default function Sidebar({ 
+  currentView, 
+  onViewChange, 
+  onNewNote, 
+  user, 
+  hasVaultPassword, 
+  onDeleteVault, 
+  onDeleteAccount 
+}: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -60,8 +68,9 @@ export default function Sidebar({ currentView, onViewChange, onNewNote, user, ha
         {/* Create Note Quick Action */}
         <Button
           color="primary"
-          className={`w-full font-semibold shadow-lg shadow-purple-500/20 bg-primary ${isCollapsed ? "min-w-0 p-0 h-10 w-10" : ""
-            }`}
+          className={`w-full font-semibold shadow-lg shadow-purple-500/20 bg-primary ${
+            isCollapsed ? "min-w-0 p-0 h-10 w-10" : ""
+          }`}
           onClick={onNewNote}
           startContent={<Plus size={18} />}
         >
@@ -77,10 +86,11 @@ export default function Sidebar({ currentView, onViewChange, onNewNote, user, ha
               <button
                 key={item.id}
                 onClick={() => handleNavClick(item.id)}
-                className={`w-full group relative overflow-hidden flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${isActive
-                  ? "bg-primary/20 text-purple-300 border border-primary/20 shadow-lg shadow-purple-500/5"
-                  : "text-white/60 hover:text-white hover:bg-white/5 border border-transparent"
-                  }`}
+                className={`w-full group relative overflow-hidden flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+                  isActive
+                    ? "bg-primary/20 text-purple-300 border border-primary/20 shadow-lg shadow-purple-500/5"
+                    : "text-white/60 hover:text-white hover:bg-white/5 border border-transparent"
+                }`}
               >
                 {/* Premium Glass Sheen Reflective Effect */}
                 <div className="absolute inset-0 pointer-events-none z-0">
@@ -97,7 +107,7 @@ export default function Sidebar({ currentView, onViewChange, onNewNote, user, ha
           })}
         </nav>
 
-        {/* Vault Actions */}
+        {/* Optional: Vault Actions in sidebar if you still want them there in addition to the dropdown */}
         {hasVaultPassword && (
           <div className="pt-4 mt-2 border-t border-white/5">
             <button
@@ -144,6 +154,7 @@ export default function Sidebar({ currentView, onViewChange, onNewNote, user, ha
               )}
             </div>
           </DropdownTrigger>
+          
           <DropdownMenu aria-label="User Profile Actions" variant="flat">
             <DropdownItem 
               key="logout" 
@@ -154,20 +165,16 @@ export default function Sidebar({ currentView, onViewChange, onNewNote, user, ha
               Logout
             </DropdownItem>
             
-            {hasVaultPassword ? (
-              <DropdownItem 
-                key="delete-vault" 
-                className="text-danger" 
-                color="danger"
-                startContent={<Trash2 size={16} />}
-                onClick={onDeleteVault}
-              >
-                Delete Vault
-              </DropdownItem>
-            ) : (
-              // Invisible container item to comply with NextUI element layout constraints safely
-              <DropdownItem key="no-vault" className="hidden" aria-hidden="true" />
-            )}
+            {/* Using CSS hidden class for conditional rendering inside NextUI DropdownMenu */}
+            <DropdownItem 
+              key="delete-vault" 
+              className={hasVaultPassword ? "text-warning font-medium" : "hidden"} 
+              color="warning"
+              startContent={<AlertTriangle size={16} />}
+              onClick={onDeleteVault}
+            >
+              Delete Vault
+            </DropdownItem>
 
             <DropdownItem 
               key="delete-account" 
