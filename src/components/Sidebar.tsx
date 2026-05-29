@@ -1,7 +1,7 @@
 "use client";
 
-import { Folder, Lock, Trash2, LogOut, Plus, ChevronLeft, ChevronRight, Menu } from "lucide-react";
-import { Button, Avatar, User } from "@nextui-org/react";
+import { Folder, Lock, Trash2, LogOut, Plus, ChevronLeft, ChevronRight, Menu, UserX } from "lucide-react";
+import { Button, Avatar, User, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from "@nextui-org/react";
 import { motion } from "framer-motion";
 import { signOut } from "next-auth/react";
 import { useState } from "react";
@@ -18,9 +18,10 @@ interface SidebarProps {
   };
   hasVaultPassword: boolean;
   onDeleteVault: () => void;
+  onDeleteAccount?: () => void; // Added prop for account deletion handler
 }
 
-export default function Sidebar({ currentView, onViewChange, onNewNote, user, hasVaultPassword, onDeleteVault }: SidebarProps) {
+export default function Sidebar({ currentView, onViewChange, onNewNote, user, hasVaultPassword, onDeleteVault, onDeleteAccount }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -118,48 +119,67 @@ export default function Sidebar({ currentView, onViewChange, onNewNote, user, ha
         )}
       </div>
 
-      {/* User profile & signout */}
-      <div className="space-y-4 border-t border-white/5 pt-4">
-        {!isCollapsed ? (
-          <div className="flex items-center justify-between gap-2 px-1">
-            <User
-              name={user.name || "User"}
-              description={user.email || ""}
-              avatarProps={{
-                src: user.image || "",
-                className: "border border-purple-500/30",
-              }}
-              classNames={{
-                name: "text-white/90 text-sm font-semibold",
-                description: "text-white/40 text-xs truncate max-w-[120px]",
-              }}
-            />
-            <Button
-              isIconOnly
-              size="sm"
-              variant="light"
-              color="danger"
-              className="text-white/40 hover:text-red-400 hover:bg-red-500/10 rounded-lg"
+      {/* User profile with Modal Context Menu Dropdown */}
+      <div className="border-t border-white/5 pt-4">
+        <Dropdown placement="top-start" className="bg-zinc-950/95 backdrop-blur-md border border-white/10 text-white rounded-xl">
+          <DropdownTrigger>
+            <div className="w-full cursor-pointer hover:bg-white/5 transition-colors p-1.5 rounded-xl flex items-center justify-center">
+              {!isCollapsed ? (
+                <div className="flex items-center justify-between gap-2 w-full px-1">
+                  <User
+                    name={user.name || "User"}
+                    description={user.email || ""}
+                    avatarProps={{
+                      src: user.image || "",
+                      className: "border border-purple-500/30",
+                    }}
+                    classNames={{
+                      name: "text-white/90 text-sm font-semibold",
+                      description: "text-white/40 text-xs truncate max-w-[140px]",
+                    }}
+                  />
+                </div>
+              ) : (
+                <Avatar src={user.image || ""} size="sm" className="border border-purple-500/30" />
+              )}
+            </div>
+          </DropdownTrigger>
+          <DropdownMenu aria-label="User Profile Actions" variant="flat">
+            <DropdownItem 
+              key="logout" 
+              startContent={<LogOut size={16} />}
               onClick={() => signOut()}
+              className="text-white/80 hover:text-white"
             >
-              <LogOut size={16} />
-            </Button>
-          </div>
-        ) : (
-          <div className="flex flex-col items-center gap-3">
-            <Avatar src={user.image || ""} size="sm" className="border border-purple-500/30" />
-            <Button
-              isIconOnly
-              size="sm"
-              variant="light"
+              Logout
+            </DropdownItem>
+            
+            {hasVaultPassword ? (
+              <DropdownItem 
+                key="delete-vault" 
+                className="text-danger" 
+                color="danger"
+                startContent={<Trash2 size={16} />}
+                onClick={onDeleteVault}
+              >
+                Delete Vault
+              </DropdownItem>
+            ) : (
+              // Invisible container item to comply with NextUI element layout constraints safely
+              <DropdownItem key="no-vault" className="hidden" aria-hidden="true" />
+            )}
+
+            <DropdownItem 
+              key="delete-account" 
+              className="text-danger font-medium" 
               color="danger"
-              className="text-white/40 hover:text-red-400 hover:bg-red-500/10 rounded-lg"
-              onClick={() => signOut()}
+              startContent={<UserX size={16} />}
+              onClick={onDeleteAccount}
             >
-              <LogOut size={16} />
-            </Button>
-          </div>
-        )}
+              Delete Account
+            </DropdownItem>
+          </DropdownMenu>
+        </Dropdown>
       </div>
     </div>
   );
