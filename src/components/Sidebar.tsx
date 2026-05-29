@@ -42,12 +42,12 @@ export default function Sidebar({ currentView, onViewChange, onNewNote, user, ha
         <div className="flex items-center gap-3 px-2 py-3 border-b border-white/5">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center font-bold text-white shadow-lg shadow-purple-500/20">
             <Image 
-    src="/favicon.ico" 
-    alt="Logo" 
-    width={24} 
-    height={24}
-    className="object-contain"
-  />
+              src="/favicon.ico" 
+              alt="Logo" 
+              width={24} 
+              height={24}
+              className="object-contain"
+            />
           </div>
           {!isCollapsed && (
             <span className="font-bold text-lg bg-gradient-to-r from-white to-white/70 bg-clip-text text-transparent">
@@ -76,13 +76,21 @@ export default function Sidebar({ currentView, onViewChange, onNewNote, user, ha
               <button
                 key={item.id}
                 onClick={() => handleNavClick(item.id)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${isActive
-                    ? "bg-primary/20 text-purple-300 border border-primary/20"
+                className={`w-full group relative overflow-hidden flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${isActive
+                    ? "bg-primary/20 text-purple-300 border border-primary/20 shadow-lg shadow-purple-500/5"
                     : "text-white/60 hover:text-white hover:bg-white/5 border border-transparent"
                   }`}
               >
-                <Icon size={18} className={isActive ? "text-purple-400" : ""} />
-                {!isCollapsed && <span>{item.label}</span>}
+                {/* Premium Glass Sheen Reflective Effect */}
+                <div className="absolute inset-0 pointer-events-none z-0">
+                  <div className="absolute -inset-full top-0 block w-1/2 h-full bg-gradient-to-r from-transparent via-white/[0.08] to-transparent skew-x-12 transform -translate-x-full transition-transform duration-1000 ease-out group-hover:translate-x-[400%]" />
+                </div>
+
+                {/* Content layers pinned to relative z-10 */}
+                <div className="relative z-10 flex items-center gap-3 w-full">
+                  <Icon size={18} className={isActive ? "text-purple-400" : ""} />
+                  {!isCollapsed && <span>{item.label}</span>}
+                </div>
               </button>
             );
           })}
@@ -93,11 +101,18 @@ export default function Sidebar({ currentView, onViewChange, onNewNote, user, ha
           <div className="pt-4 mt-2 border-t border-white/5">
             <button
               onClick={onDeleteVault}
-              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 text-red-400/80 hover:text-red-400 hover:bg-red-500/10 border border-transparent"
+              className="w-full group relative overflow-hidden flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 text-red-400/80 hover:text-red-400 hover:bg-red-500/10 border border-transparent"
               title="Delete Vault"
             >
-              <Trash2 size={18} />
-              {!isCollapsed && <span>Delete Vault</span>}
+              {/* Premium Glass Sheen Reflective Effect for Delete Vault */}
+              <div className="absolute inset-0 pointer-events-none z-0">
+                <div className="absolute -inset-full top-0 block w-1/2 h-full bg-gradient-to-r from-transparent via-white/[0.08] to-transparent skew-x-12 transform -translate-x-full transition-transform duration-1000 ease-out group-hover:translate-x-[400%]" />
+              </div>
+
+              <div className="relative z-10 flex items-center gap-3 w-full">
+                <Trash2 size={18} />
+                {!isCollapsed && <span>Delete Vault</span>}
+              </div>
             </button>
           </div>
         )}
@@ -156,12 +171,12 @@ export default function Sidebar({ currentView, onViewChange, onNewNote, user, ha
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center font-bold text-white">
             <Image 
-    src="/favicon.ico" 
-    alt="Logo" 
-    width={24} 
-    height={24}
-    className="object-contain"
-  />
+              src="/favicon.ico" 
+              alt="Logo" 
+              width={24} 
+              height={24}
+              className="object-contain"
+            />
           </div>
           <span className="font-bold text-white">Next Notes</span>
         </div>

@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
-import { Input, Spinner, Button } from "@nextui-org/react";
-import { Search, FileText, Trash2, Lock, Plus } from "lucide-react";
+import { Input, Spinner } from "@nextui-org/react";
+import { Search, FileText, Trash2, Lock } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import Sidebar from "@/components/Sidebar";
 import NoteCard from "@/components/NoteCard";
@@ -11,7 +11,6 @@ import NoteEditorModal from "@/components/NoteEditorModal";
 import VaultLock from "@/components/VaultLock";
 import InstallPrompt from "@/components/InstallPrompt";
 import ConfirmationModal from "@/components/ConfirmationModal";
-import OTPModal from "@/components/OTPModal";
 
 interface Note {
   id: string;
@@ -55,11 +54,6 @@ export default function Dashboard() {
     currentVal?: boolean;
   } | null>(null);
 
-  // OTP Modal State
-  const [otpModalOpen, setOtpModalOpen] = useState(false);
-  const [otpLoading, setOtpLoading] = useState(false);
-  const [otpError, setOtpError] = useState("");
-
   // Check if vault password exists
   useEffect(() => {
     const checkVault = async () => {
@@ -70,11 +64,9 @@ export default function Dashboard() {
           body: JSON.stringify({ password: "___check___" }),
         });
         const data = await res.json();
-        // If we get "notInitialized" flag, vault is not set up
         if (data.notInitialized) {
           setHasVaultPassword(false);
         } else {
-          // Vault exists (password was wrong, which is expected)
           setHasVaultPassword(true);
         }
       } catch {
@@ -108,7 +100,6 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (session) {
-      // Only fetch vault notes if unlocked
       if (currentView === "vault" && !vaultUnlocked) return;
       fetchNotes();
     }
@@ -125,14 +116,12 @@ export default function Dashboard() {
     setIsSaving(true);
     try {
       if (id) {
-        // Update
         await fetch(`/api/notes/${id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ title, content, isPinned, isLocked }),
         });
       } else {
-        // Create
         await fetch("/api/notes", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -175,14 +164,11 @@ export default function Dashboard() {
 
   const handleLockToggle = (id: string, currentVal: boolean) => {
     if (!currentVal) {
-      // Move to vault
       setConfirmAction({ type: "vault", id, currentVal });
     } else {
-      // Unlock (remove from vault)
       setConfirmAction({ type: "unlock", id, currentVal });
     }
   };
-
 
   const executeDeleteToggle = async (id: string, currentVal: boolean) => {
     try {
@@ -198,7 +184,6 @@ export default function Dashboard() {
   };
 
   const handleDeleteToggle = (id: string, currentVal: boolean) => {
-    // Only confirm when moving TO bin (not recovering)
     if (!currentVal) {
       setConfirmAction({ type: "bin", id, currentVal });
     } else {
@@ -225,34 +210,6 @@ export default function Dashboard() {
     setConfirmAction({ type: "deleteVault", id: "" });
   };
 
-  const handleOTPSubmit = async (code: string) => {
-    setOtpLoading(true);
-    setOtpError("");
-    try {
-      const res = await fetch("/api/vault/delete-confirm", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setHasVaultPassword(false);
-        setVaultUnlocked(false);
-        setOtpModalOpen(false);
-        if (currentView === "vault") {
-          setCurrentView("all");
-        }
-        fetchNotes();
-      } else {
-        setOtpError(data.error || "Incorrect verification code.");
-      }
-    } catch (err) {
-      setOtpError("An error occurred. Please try again.");
-    } finally {
-      setOtpLoading(false);
-    }
-  };
-
   const handleNewNote = () => {
     setEditingNote(null);
     setEditorOpen(true);
@@ -268,7 +225,6 @@ export default function Dashboard() {
     setSearchQuery("");
   };
 
-  // View title & icon
   const viewConfig = {
     all: { title: "All Notes", icon: FileText, emptyText: "No notes yet. Create your first note!" },
     vault: { title: "Secret Vault", icon: Lock, emptyText: "Your vault is empty. Lock notes to keep them private." },
@@ -280,21 +236,19 @@ export default function Dashboard() {
   return (
     <div className="flex flex-col md:flex-row min-h-screen">
       <Sidebar
-          currentView={currentView}
-          onViewChange={handleViewChange}
-          onNewNote={handleNewNote}
-          hasVaultPassword={hasVaultPassword}
-          onDeleteVault={handleDeleteVault}
-          user={{
-            name: session?.user?.name,
-            email: session?.user?.email,
-            image: session?.user?.image,
-          }}
-        />
+        currentView={currentView}
+        onViewChange={handleViewChange}
+        onNewNote={handleNewNote}
+        hasVaultPassword={hasVaultPassword}
+        onDeleteVault={handleDeleteVault}
+        user={{
+          name: session?.user?.name,
+          email: session?.user?.email,
+          image: session?.user?.image,
+        }}
+      />
 
-      {/* Main content area */}
       <main className="flex-1 flex flex-col min-h-screen">
-        {/* Header with Search */}
         <header className="sticky top-0 md:top-0 z-20 px-6 py-4 border-b border-white/5 bg-black/20 backdrop-blur-lg">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center gap-3">
@@ -323,52 +277,67 @@ export default function Dashboard() {
           </div>
         </header>
 
-        {/* Content */}
+        {/* AnimatePresence monitors when the layout component content mount or unmount switches views */}
         <div className="flex-1 p-6 overflow-y-auto">
-          {/* Vault Lock Gate */}
-          {currentView === "vault" && !vaultUnlocked && vaultChecked ? (
-            <VaultLock
-              onUnlock={() => setVaultUnlocked(true)}
-              hasVaultPassword={hasVaultPassword}
-              onPasswordSet={() => {
-                setHasVaultPassword(true);
-                setVaultUnlocked(true);
-              }}
-            />
-          ) : loading ? (
-            <div className="flex items-center justify-center h-64">
-              <Spinner color="secondary" size="lg" />
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              <AnimatePresence mode="popLayout">
-                {notes.map((note) => (
-                  <motion.div
-                    key={note.id}
-                    layout
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <NoteCard
-                      note={note}
-                      view={currentView}
-                      onEdit={handleEditNote}
-                      onPinToggle={handlePinToggle}
-                      onLockToggle={handleLockToggle}
-                      onDeleteToggle={handleDeleteToggle}
-                      onDeletePermanent={handleDeletePermanent}
-                    />
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-            </div>
-          )}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentView}
+              initial={{ opacity: 0, scale: 0.96, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: -10 }}
+              transition={{ duration: 0.25, ease: "easeInOut" }}
+              className="w-full h-full"
+            >
+              {currentView === "vault" && !vaultUnlocked && vaultChecked ? (
+                <VaultLock
+                  onUnlock={() => setVaultUnlocked(true)}
+                  hasVaultPassword={hasVaultPassword}
+                  onPasswordSet={() => {
+                    setHasVaultPassword(true);
+                    setVaultUnlocked(true);
+                  }}
+                />
+              ) : loading ? (
+                <div className="flex items-center justify-center h-64">
+                  <Spinner color="secondary" size="lg" />
+                </div>
+              ) : notes.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-64 text-center p-4">
+                  <p className="text-white/40 text-sm max-w-sm">
+                    {viewConfig[currentView].emptyText}
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  <AnimatePresence mode="popLayout">
+                    {notes.map((note) => (
+                      <motion.div
+                        key={note.id}
+                        layout
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <NoteCard
+                          note={note}
+                          view={currentView}
+                          onEdit={handleEditNote}
+                          onPinToggle={handlePinToggle}
+                          onLockToggle={handleLockToggle}
+                          onDeleteToggle={handleDeleteToggle}
+                          onDeletePermanent={handleDeletePermanent}
+                        />
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                </div>
+              )}
+            </motion.div>
+          </AnimatePresence>
         </div>
       </main>
 
-      {/* Note Editor Modal */}
       <NoteEditorModal
         isOpen={editorOpen}
         onClose={() => setEditorOpen(false)}
@@ -377,10 +346,8 @@ export default function Dashboard() {
         isSaving={isSaving}
       />
 
-      {/* PWA Install Prompt */}
       <InstallPrompt />
 
-      {/* Confirmation Modal */}
       {confirmAction && (
         <ConfirmationModal
           isOpen={true}
@@ -396,14 +363,17 @@ export default function Dashboard() {
             } else if (confirmAction.type === "delete") {
               executeDeletePermanent(confirmAction.id);
             } else if (confirmAction.type === "deleteVault") {
-              fetch("/api/vault/delete-request", { method: "POST" })
-                .then((res) => res.json())
-                .then((data) => {
-                  if (data.success) {
-                    setOtpModalOpen(true);
+              fetch("/api/vault/delete-confirm", { method: "POST" })
+                .then((res) => {
+                  if (res.ok) {
+                    setHasVaultPassword(false);
+                    setVaultUnlocked(false);
+                    if (currentView === "vault") {
+                      setCurrentView("all");
+                    }
+                    fetchNotes();
                   } else {
-                    console.error("Failed to send OTP:", data.error);
-                    // could show an alert or toast here
+                    console.error("Failed to delete vault directly");
                   }
                 })
                 .catch(console.error);
@@ -418,7 +388,7 @@ export default function Dashboard() {
               : confirmAction.type === "bin"
               ? "Move to Recycle Bin?"
               : confirmAction.type === "deleteVault"
-              ? "Delete Vault?"
+              ? "Delete Vault Permanently?"
               : "Delete Permanently?"
           }
           message={
@@ -429,7 +399,7 @@ export default function Dashboard() {
               : confirmAction.type === "bin"
               ? "Are you sure you want to move this note to the Recycle Bin? You can recover it later."
               : confirmAction.type === "deleteVault"
-              ? "Are you sure you want to delete the entire vault? This will remove all vault data."
+              ? "Are you sure you want to completely destroy the vault? This instantly wipes out your master setup and removes all locked notes forever."
               : "Are you sure you want to permanently delete this note? This action cannot be undone."
           }
           confirmText={
@@ -440,23 +410,12 @@ export default function Dashboard() {
               : confirmAction.type === "bin"
               ? "Move"
               : confirmAction.type === "deleteVault"
-              ? "Delete Vault"
+              ? "Wipe Vault"
               : "Delete"
           }
           isDestructive={confirmAction.type === "delete" || confirmAction.type === "deleteVault"}
         />
       )}
-
-      {/* OTP Modal for Vault Deletion */}
-      <OTPModal
-        isOpen={otpModalOpen}
-        onClose={() => setOtpModalOpen(false)}
-        onSubmit={handleOTPSubmit}
-        title="Verify Vault Deletion"
-        message="A 6-digit verification code has been sent to your email. Enter it below to permanently delete your vault and all locked notes."
-        isLoading={otpLoading}
-        error={otpError}
-      />
     </div>
   );
 }

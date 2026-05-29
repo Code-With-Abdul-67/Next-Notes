@@ -102,12 +102,12 @@ export default function VaultLock({ onUnlock, hasVaultPassword, onPasswordSet }:
             <Lock size={32} />
           </div>
           <h2 className="text-xl font-bold text-white">
-            {!isSetupMode ? "Secret Vault" : (isResetting ? "Reset Master Password" : "Setup Secret Vault")}
+            {!isSetupMode ? "Secret Vault" : (isResetting ? "Reset Master Password" : "Create Secret Vault")}
           </h2>
           <p className="text-sm text-white/50">
             {!isSetupMode
               ? "Verify your master password to access encrypted notes."
-              : "Create a new master password to encrypt and secure private files."}
+              : "Create a master password to encrypt and secure your notes."}
           </p>
         </CardHeader>
 
