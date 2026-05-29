@@ -16,7 +16,6 @@
     "lucide-react": "^1.16.0",
     "next": "16.2.6",
     "next-auth": "^4.24.14",
-    "": "^8.0.7",
     "react": "19.2.4",
     "react-dom": "19.2.4"
   },
@@ -24,7 +23,6 @@
     "@prisma/client": "^6.19.3",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20",
-    "@types/": "^8.0.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "autoprefixer": "^10.5.0",
