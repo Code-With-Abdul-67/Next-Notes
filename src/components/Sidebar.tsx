@@ -5,6 +5,7 @@ import { Button, Avatar, User } from "@nextui-org/react";
 import { motion } from "framer-motion";
 import { signOut } from "next-auth/react";
 import { useState } from "react";
+import Image from 'next/image';
 
 interface SidebarProps {
   currentView: "all" | "vault" | "bin";
@@ -40,7 +41,13 @@ export default function Sidebar({ currentView, onViewChange, onNewNote, user, ha
         {/* Brand Logo Header */}
         <div className="flex items-center gap-3 px-2 py-3 border-b border-white/5">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center font-bold text-white shadow-lg shadow-purple-500/20">
-            N
+            <Image 
+    src="/favicon.ico" 
+    alt="Logo" 
+    width={24} 
+    height={24}
+    className="object-contain"
+  />
           </div>
           {!isCollapsed && (
             <span className="font-bold text-lg bg-gradient-to-r from-white to-white/70 bg-clip-text text-transparent">
@@ -148,7 +155,13 @@ export default function Sidebar({ currentView, onViewChange, onNewNote, user, ha
       <div className="md:hidden w-full flex items-center justify-between px-4 py-3 glass-panel border-x-0 border-t-0 sticky top-0 z-40">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center font-bold text-white">
-            N
+            <Image 
+    src="/favicon.ico" 
+    alt="Logo" 
+    width={24} 
+    height={24}
+    className="object-contain"
+  />
           </div>
           <span className="font-bold text-white">Next Notes</span>
         </div>
