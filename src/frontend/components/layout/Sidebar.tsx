@@ -103,22 +103,21 @@ export default function Sidebar({
         </div>
 
         {/* New Note Button */}
-        <motion.div
-          whileHover={{ scale: 1.03, y: -1 }}
-          whileTap={{ scale: 0.97 }}
-          transition={{ type: "spring", stiffness: 400, damping: 20 }}
+        <button
+          onClick={onNewNote}
+          className={`group relative overflow-hidden w-full font-semibold rounded-xl bg-primary text-white shadow-lg shadow-purple-500/20 transition-all duration-200 hover:shadow-purple-500/40 hover:brightness-110 flex items-center justify-center gap-2 ${
+            isCollapsed ? "h-10 w-10 p-0" : "h-10 px-4"
+          }`}
         >
-          <Button
-            color="primary"
-            className={`w-full font-semibold shadow-lg shadow-purple-500/30 bg-primary transition-shadow duration-200 hover:shadow-purple-500/50 hover:shadow-xl ${
-              isCollapsed ? "min-w-0 p-0 h-10 w-10" : ""
-            }`}
-            onPress={onNewNote}
-            startContent={<Plus size={18} />}
-          >
-            {!isCollapsed && "New Note"}
-          </Button>
-        </motion.div>
+          {/* Sliding sheen */}
+          <div className="absolute inset-0 pointer-events-none z-0">
+            <div className="absolute -inset-full top-0 block w-1/2 h-full bg-gradient-to-r from-transparent via-white/[0.18] to-transparent skew-x-12 transform -translate-x-full transition-transform duration-700 ease-out group-hover:translate-x-[400%]" />
+          </div>
+          <div className="relative z-10 flex items-center gap-2">
+            <Plus size={18} />
+            {!isCollapsed && <span>New Note</span>}
+          </div>
+        </button>
 
         {/* Navigation */}
         <nav className="space-y-1">
