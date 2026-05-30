@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { authOptions } from "@/backend/lib/auth";
+import { prisma } from "@/backend/lib/prisma";
 
 // GET /api/notes - Retrieve notes with optional filters (trash, vault, search)
 export async function GET(request: Request) {
@@ -54,9 +54,9 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { title, content, isPinned, isLocked } = body;
+    const { title, content, isPinned, isLocked, encryptedData } = body;
 
-    if (!title && !content) {
+    if (!title && !content && !encryptedData) {
       return NextResponse.json(
         { error: "Note must have either a title or content" },
         { status: 400 }
@@ -67,6 +67,7 @@ export async function POST(request: Request) {
       data: {
         title: title || "",
         content: content || "",
+        encryptedData: encryptedData || null,
         isPinned: isPinned || false,
         isLocked: isLocked || false,
         isDeleted: false,

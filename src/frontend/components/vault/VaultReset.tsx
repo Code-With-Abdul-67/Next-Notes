@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Button, Input, Card, CardBody, CardHeader } from "@nextui-org/react";
-import { Timer, KeyRound, Loader2, ShieldCheck, ArrowLeft } from "lucide-react";
+import { KeyRound, Loader2, ShieldCheck, ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface VaultResetProps {

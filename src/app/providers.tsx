@@ -5,7 +5,7 @@ import { SessionProvider } from "next-auth/react";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <SessionProvider>
+    <SessionProvider refetchOnWindowFocus={false}>
       <NextUIProvider className="dark text-foreground bg-background min-h-screen">
         {children}
       </NextUIProvider>

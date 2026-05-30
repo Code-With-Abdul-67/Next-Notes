@@ -17,6 +17,7 @@ interface NoteEditorModalProps {
   isOpen: boolean;
   onClose: () => void;
   note: Note | null;
+  defaultLocked?: boolean;
   onSave: (id: string | null, title: string, content: string, isPinned: boolean, isLocked: boolean) => Promise<void>;
   isSaving: boolean;
 }
@@ -25,6 +26,7 @@ export default function NoteEditorModal({
   isOpen,
   onClose,
   note,
+  defaultLocked = false,
   onSave,
   isSaving,
 }: NoteEditorModalProps) {
@@ -43,9 +45,9 @@ export default function NoteEditorModal({
       setTitle("");
       setContent("");
       setIsPinned(false);
-      setIsLocked(false);
+      setIsLocked(defaultLocked);
     }
-  }, [note, isOpen]);
+  }, [note, isOpen, defaultLocked]);
 
   const handleSave = async () => {
     await onSave(note ? note.id : null, title, content, isPinned, isLocked);

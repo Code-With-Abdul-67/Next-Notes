@@ -1,14 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Lock, Unlock, KeyRound, Loader2, ArrowRight } from "lucide-react";
+import { Lock, KeyRound, Loader2, ArrowRight } from "lucide-react";
 import { Button, Input, Card, CardBody, CardHeader } from "@nextui-org/react";
 import VaultReset from "./VaultReset";
 
 interface VaultLockProps {
-  onUnlock: () => void;
+  onUnlock: (password: string) => void;
   hasVaultPassword: boolean;
-  onPasswordSet: () => void; // Triggered when vault password is set successfully
+  onPasswordSet: (password: string) => void; // Triggered when vault password is set successfully
 }
 
 export default function VaultLock({ onUnlock, hasVaultPassword, onPasswordSet }: VaultLockProps) {
@@ -46,7 +46,7 @@ export default function VaultLock({ onUnlock, hasVaultPassword, onPasswordSet }:
       if (!res.ok) {
         setError(data.error || "Failed to set up master password.");
       } else {
-        onPasswordSet();
+        onPasswordSet(password);
       }
     } catch (err) {
       setError("Something went wrong. Please try again.");
@@ -77,7 +77,7 @@ export default function VaultLock({ onUnlock, hasVaultPassword, onPasswordSet }:
       if (!res.ok) {
         setError(data.error || "Incorrect master password.");
       } else {
-        onUnlock();
+        onUnlock(password);
       }
     } catch (err) {
       setError("Something went wrong. Please try again.");

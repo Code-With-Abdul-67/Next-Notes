@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { authOptions } from "@/backend/lib/auth";
+import { prisma } from "@/backend/lib/prisma";
 import bcrypt from "bcryptjs";
 
 export async function POST(request: Request) {
@@ -40,7 +40,12 @@ export async function POST(request: Request) {
     // Password reset is authorized
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
+    // All vault notes encrypted with the old password are now unreadable.
+    // Delete them to prevent orphaned, undecryptable data.
     await prisma.$transaction([
+      prisma.note.deleteMany({
+        where: { userId, isLocked: true },
+      }),
       prisma.user.update({
         where: { id: userId },
         data: { vaultPassword: hashedPassword },

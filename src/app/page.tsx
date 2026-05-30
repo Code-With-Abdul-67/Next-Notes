@@ -4,7 +4,7 @@ import { useSession, signIn } from "next-auth/react";
 import { useEffect } from "react";
 import { Button, Spinner } from "@nextui-org/react";
 import { motion } from "framer-motion";
-import Dashboard from "@/components/Dashboard";
+import Dashboard from "@/frontend/components/layout/Dashboard";
 import Image from 'next/image';
 
 

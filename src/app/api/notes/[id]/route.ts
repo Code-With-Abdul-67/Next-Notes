@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { authOptions } from "@/backend/lib/auth";
+import { prisma } from "@/backend/lib/prisma";
 
 // PUT /api/notes/[id] - Update a note's properties (title, content, isPinned, isDeleted, isLocked)
 export async function PUT(request: Request, context: any) {
@@ -23,13 +23,14 @@ export async function PUT(request: Request, context: any) {
     }
 
     const body = await request.json();
-    const { title, content, isPinned, isDeleted, isLocked } = body;
+    const { title, content, isPinned, isDeleted, isLocked, encryptedData } = body;
 
     const updatedNote = await prisma.note.update({
       where: { id },
       data: {
         title: title !== undefined ? title : note.title,
         content: content !== undefined ? content : note.content,
+        encryptedData: encryptedData !== undefined ? encryptedData : note.encryptedData,
         isPinned: isPinned !== undefined ? isPinned : note.isPinned,
         isDeleted: isDeleted !== undefined ? isDeleted : note.isDeleted,
         isLocked: isLocked !== undefined ? isLocked : note.isLocked,
