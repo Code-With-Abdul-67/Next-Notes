@@ -68,6 +68,7 @@ export async function POST(request: Request) {
         title: title || "",
         content: content || "",
         encryptedData: encryptedData || null,
+        color: body.color || null,
         isPinned: isPinned || false,
         isLocked: isLocked || false,
         isDeleted: false,

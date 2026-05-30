@@ -4,10 +4,19 @@ import { Pin, Trash2, RotateCcw, Lock, Unlock, Calendar } from "lucide-react";
 import { Button } from "@nextui-org/react";
 import { motion } from "framer-motion";
 
+const COLOR_MAP: Record<string, { border: string; glow: string; accent: string }> = {
+  purple: { border: "border-purple-500/40", glow: "hover:shadow-purple-500/20", accent: "bg-purple-500/10" },
+  blue:   { border: "border-blue-500/40",   glow: "hover:shadow-blue-500/20",   accent: "bg-blue-500/10" },
+  green:  { border: "border-green-500/40",  glow: "hover:shadow-green-500/20",  accent: "bg-green-500/10" },
+  yellow: { border: "border-yellow-500/40", glow: "hover:shadow-yellow-500/20", accent: "bg-yellow-500/10" },
+  red:    { border: "border-red-500/40",    glow: "hover:shadow-red-500/20",    accent: "bg-red-500/10" },
+};
+
 interface Note {
   id: string;
   title: string;
   content: string;
+  color?: string | null;
   isPinned: boolean;
   isLocked: boolean;
   isDeleted: boolean;
@@ -25,89 +34,63 @@ interface NoteCardProps {
 }
 
 export default function NoteCard({
-  note,
-  onEdit,
-  onPinToggle,
-  onLockToggle,
-  onDeleteToggle,
-  onDeletePermanent,
-  view,
+  note, onEdit, onPinToggle, onLockToggle, onDeleteToggle, onDeletePermanent, view,
 }: NoteCardProps) {
   const formattedDate = new Date(note.updatedAt).toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
+    month: "short", day: "numeric", year: "numeric",
   });
-
   const formattedTime = new Date(note.updatedAt).toLocaleTimeString(undefined, {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: true,
+    hour: "2-digit", minute: "2-digit", hour12: true,
   });
-
   const fullTimestamp = `${formattedDate} • ${formattedTime}`;
 
   const contentPreview = note.content
-    ? note.content.length > 120
-      ? note.content.slice(0, 120) + "..."
-      : note.content
+    ? note.content.length > 120 ? note.content.slice(0, 120) + "..." : note.content
     : "No additional text";
 
-  const handleCardClick = () => {
-    if (view !== "bin") {
-      onEdit(note);
-    }
-  };
+  const colorStyle = note.color ? COLOR_MAP[note.color] : null;
 
   return (
     <motion.div
       layout
       initial={{ opacity: 0, scale: 0.92, y: 10 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
-      exit={{
-        opacity: 0,
-        scale: 0.90,
-        y: 15,
-        transition: { duration: 0.2 },
-      }}
-      transition={{
-        type: "spring",
-        stiffness: 300,
-        damping: 25,
-        layout: { duration: 0.25 },
-      }}
+      exit={{ opacity: 0, scale: 0.90, y: 15, transition: { duration: 0.2 } }}
+      transition={{ type: "spring", stiffness: 300, damping: 25, layout: { duration: 0.25 } }}
       className="h-full"
     >
       <div
-        onClick={handleCardClick}
-        className="group relative overflow-hidden glass-card w-full h-48 flex flex-col justify-between rounded-xl border border-white/5 bg-white/5 backdrop-blur-md shadow-lg transition-all duration-300 cursor-pointer hover:bg-white/10 hover:border-white/20 hover:shadow-purple-500/5"
+        onClick={() => view !== "bin" && onEdit(note)}
+        className={`group relative overflow-hidden glass-card w-full h-48 flex flex-col justify-between rounded-xl border bg-white/5 backdrop-blur-md shadow-lg transition-all duration-300 cursor-pointer hover:bg-white/10 hover:shadow-xl ${
+          colorStyle
+            ? `${colorStyle.border} ${colorStyle.glow}`
+            : "border-white/5 hover:border-white/20 hover:shadow-purple-500/5"
+        }`}
       >
-        {/* Sheen effect */}
+        {/* Color accent top bar */}
+        {colorStyle && (
+          <div className={`absolute top-0 left-0 right-0 h-0.5 ${colorStyle.accent} rounded-t-xl`} />
+        )}
+
+        {/* Sheen */}
         <div className="absolute inset-0 pointer-events-none z-0">
           <div className="absolute -inset-full top-0 block w-1/2 h-full bg-gradient-to-r from-transparent via-white/[0.06] to-transparent skew-x-12 transform -translate-x-full transition-transform duration-1000 ease-out group-hover:translate-x-[400%]" />
         </div>
 
-        {/* Content */}
         <div className="relative z-10 flex flex-col justify-between h-full w-full">
-
           {/* Header */}
           <div className="flex justify-between items-start gap-2 pt-4 px-4 pb-2">
             <h4 className="font-bold text-white text-base line-clamp-1 flex-1">
               {note.title || "Untitled Note"}
             </h4>
-
-            {/* Action buttons — stopPropagation so card click doesn't fire */}
             <div
               className="flex items-center gap-1 shrink-0"
               onClick={(e) => e.stopPropagation()}
               onTouchEnd={(e) => e.stopPropagation()}
             >
               {view === "all" && onPinToggle && (
-                <Button
-                  isIconOnly
-                  size="sm"
-                  variant="light"
-                  aria-label={note.isPinned ? "Unpin note" : "Pin note"}
+                <Button isIconOnly size="sm" variant="light"
+                  aria-label={note.isPinned ? "Unpin" : "Pin"}
                   className={note.isPinned ? "text-purple-400" : "text-white/30 hover:text-white"}
                   onPress={() => onPinToggle(note.id, note.isPinned)}
                 >
@@ -115,10 +98,7 @@ export default function NoteCard({
                 </Button>
               )}
               {view !== "bin" && onLockToggle && (
-                <Button
-                  isIconOnly
-                  size="sm"
-                  variant="light"
+                <Button isIconOnly size="sm" variant="light"
                   aria-label={note.isLocked ? "Remove from Vault" : "Move to Vault"}
                   className={note.isLocked ? "text-amber-400" : "text-white/30 hover:text-amber-400"}
                   onPress={() => onLockToggle(note.id, note.isLocked)}
@@ -144,15 +124,11 @@ export default function NoteCard({
               <Calendar size={11} className="text-white/30 transition-colors duration-300 group-hover:text-purple-400" />
               <span>{fullTimestamp}</span>
             </div>
-
             <div className="flex items-center gap-1">
               {view === "bin" ? (
                 <>
                   {onDeleteToggle && (
-                    <Button
-                      isIconOnly
-                      size="sm"
-                      variant="light"
+                    <Button isIconOnly size="sm" variant="light"
                       aria-label="Recover note"
                       className="text-white/40 hover:text-purple-300 hover:bg-purple-500/10 rounded-lg"
                       onPress={() => onDeleteToggle(note.id, note.isDeleted)}
@@ -161,10 +137,7 @@ export default function NoteCard({
                     </Button>
                   )}
                   {onDeletePermanent && (
-                    <Button
-                      isIconOnly
-                      size="sm"
-                      variant="light"
+                    <Button isIconOnly size="sm" variant="light"
                       aria-label="Delete permanently"
                       className="text-white/40 hover:text-red-400 hover:bg-red-500/10 rounded-lg"
                       onPress={() => onDeletePermanent(note.id)}
@@ -175,10 +148,7 @@ export default function NoteCard({
                 </>
               ) : (
                 onDeleteToggle && (
-                  <Button
-                    isIconOnly
-                    size="sm"
-                    variant="light"
+                  <Button isIconOnly size="sm" variant="light"
                     aria-label="Move to recycle bin"
                     className="text-white/30 hover:text-red-400 hover:bg-red-500/10 rounded-lg"
                     onPress={() => onDeleteToggle(note.id, note.isDeleted)}

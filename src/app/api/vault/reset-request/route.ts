@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/backend/lib/auth";
 import { prisma } from "@/backend/lib/prisma";
+import { sendVaultResetEmail } from "@/backend/lib/email";
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
@@ -12,8 +13,9 @@ export async function POST(request: Request) {
   const email = session.user.email;
 
   try {
+    // 6-digit code, expires in 5 minutes
     const code = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiresAt = new Date(Date.now() + 60 * 1000);
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
 
     await prisma.verificationCode.upsert({
       where: { email },
@@ -21,9 +23,11 @@ export async function POST(request: Request) {
       create: { email, code, expiresAt },
     });
 
-    return NextResponse.json({ message: "Verification code sent" });
+    await sendVaultResetEmail(email, code);
+
+    return NextResponse.json({ message: "Verification code sent to your email" });
   } catch (error) {
     console.error("Vault reset request error:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to send reset email. Please try again." }, { status: 500 });
   }
 }

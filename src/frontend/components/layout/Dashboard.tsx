@@ -19,6 +19,7 @@ interface Note {
   id: string;
   title: string;
   content: string;
+  color?: string | null;
   encryptedData?: string | null;
   isPinned: boolean;
   isLocked: boolean;
@@ -72,6 +73,19 @@ export default function Dashboard() {
     id: string;
     currentVal?: boolean;
   } | null>(null);
+
+  // Keyboard shortcut: Ctrl+N / Cmd+N → new note
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "n") {
+        e.preventDefault();
+        handleNewNote();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Check if vault password exists — runs once per user login, not on every session refetch
   const userId = (session?.user as any)?.id as string | undefined;
@@ -149,7 +163,8 @@ export default function Dashboard() {
     title: string,
     content: string,
     isPinned: boolean,
-    isLocked: boolean
+    isLocked: boolean,
+    color: string | null = null
   ) => {
     setIsSaving(true);
     try {
@@ -183,6 +198,7 @@ export default function Dashboard() {
             encryptedData,
             isPinned,
             isLocked,
+            color,
           }),
         });
       } else {
@@ -195,6 +211,7 @@ export default function Dashboard() {
             encryptedData,
             isPinned,
             isLocked,
+            color,
           }),
         });
       }
@@ -416,6 +433,7 @@ export default function Dashboard() {
         hasVaultPassword={hasVaultPassword}
         onDeleteVault={handleDeleteVault}
         onDeleteAccount={handleDeleteAccount}
+        noteCounts={{ all: notes.length, vault: 0, bin: 0 }}
         user={{
           name: session?.user?.name,
           email: session?.user?.email,
@@ -657,6 +675,18 @@ export default function Dashboard() {
           isDestructive={["delete", "emptyBin", "deleteVault", "deleteAccount"].includes(confirmAction.type)}
         />
       )}
+      {/* Mobile floating action button — always visible on mobile */}
+      <button
+        onClick={handleNewNote}
+        className="md:hidden fixed bottom-6 right-6 z-40 group w-14 h-14 rounded-full bg-primary shadow-xl shadow-purple-500/30 flex items-center justify-center text-white transition-all duration-200 hover:scale-110 hover:shadow-purple-500/50 active:scale-95 overflow-hidden"
+        aria-label="New Note"
+      >
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute -inset-full top-0 block w-1/2 h-full bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12 transform -translate-x-full transition-transform duration-700 ease-out group-hover:translate-x-[400%]" />
+        </div>
+        <Plus size={24} className="relative z-10" />
+      </button>
+
       <Toast toasts={toasts} onRemove={removeToast} />
     </div>
   );

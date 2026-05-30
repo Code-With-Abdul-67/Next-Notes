@@ -50,10 +50,11 @@ model Note {
   id            String   @id @default(cuid())
   title         String
   content       String   @db.Text
-  encryptedData String?  @db.Text // AES-256-GCM encrypted payload (vault notes only)
+  encryptedData String?  @db.Text
+  color         String?  // Optional color accent: "red" | "blue" | "green" | "yellow" | "purple" | null
   isPinned      Boolean  @default(false)
-  isLocked      Boolean  @default(false) // Secret vault lock
-  isDeleted     Boolean  @default(false) // Recycle bin status
+  isLocked      Boolean  @default(false)
+  isDeleted     Boolean  @default(false)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   userId        String

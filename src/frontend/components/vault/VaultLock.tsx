@@ -8,7 +8,7 @@ import VaultReset from "./VaultReset";
 interface VaultLockProps {
   onUnlock: (password: string) => void;
   hasVaultPassword: boolean;
-  onPasswordSet: (password: string) => void; // Triggered when vault password is set successfully
+  onPasswordSet: (password: string) => void;
 }
 
 export default function VaultLock({ onUnlock, hasVaultPassword, onPasswordSet }: VaultLockProps) {
@@ -17,23 +17,13 @@ export default function VaultLock({ onUnlock, hasVaultPassword, onPasswordSet }:
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
-  const isSetupMode = !hasVaultPassword || isResetting;
+  const isSetupMode = !hasVaultPassword;
 
-  // Handle vault initial setup
   const handleSetup = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    
-    if (password.length < 4) {
-      setError("Master password must be at least 4 characters long.");
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      setError("Passwords do not match.");
-      return;
-    }
-
+    if (password.length < 4) { setError("Master password must be at least 4 characters long."); return; }
+    if (password !== confirmPassword) { setError("Passwords do not match."); return; }
     setLoading(true);
     try {
       const res = await fetch("/api/vault/setup", {
@@ -41,30 +31,17 @@ export default function VaultLock({ onUnlock, hasVaultPassword, onPasswordSet }:
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ password }),
       });
-
       const data = await res.json();
-      if (!res.ok) {
-        setError(data.error || "Failed to set up master password.");
-      } else {
-        onPasswordSet(password);
-      }
-    } catch (err) {
-      setError("Something went wrong. Please try again.");
-    } finally {
-      setLoading(false);
-    }
+      if (!res.ok) { setError(data.error || "Failed to set up master password."); }
+      else { onPasswordSet(password); }
+    } catch { setError("Something went wrong. Please try again."); }
+    finally { setLoading(false); }
   };
 
-  // Handle vault verification
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-
-    if (!password) {
-      setError("Please enter your master password.");
-      return;
-    }
-
+    if (!password) { setError("Please enter your master password."); return; }
     setLoading(true);
     try {
       const res = await fetch("/api/vault/verify", {
@@ -72,27 +49,41 @@ export default function VaultLock({ onUnlock, hasVaultPassword, onPasswordSet }:
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ password }),
       });
+      const data = await res.json();
+      if (!res.ok) { setError(data.error || "Incorrect master password."); }
+      else { onUnlock(password); }
+    } catch { setError("Something went wrong. Please try again."); }
+    finally { setLoading(false); }
+  };
 
+  const handleResetRequest = async () => {
+    setError("");
+    setLoading(true);
+    try {
+      const res = await fetch("/api/vault/reset-request", { method: "POST" });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error || "Incorrect master password.");
+        setError(data.error || "Failed to send reset email.");
       } else {
-        onUnlock(password);
+        setPassword("");
+        setConfirmPassword("");
+        setIsResetting(true);
       }
-    } catch (err) {
-      setError("Something went wrong. Please try again.");
-    } finally {
-      setLoading(false);
-    }
+    } catch { setError("Something went wrong. Please try again."); }
+    finally { setLoading(false); }
   };
 
-  // Handle triggering password reset flow (direct reset)
-  const handleResetRequest = () => {
-    setError("");
-    setPassword("");
-    setConfirmPassword("");
-    setIsResetting(true);
-  };
+  if (isResetting) {
+    return (
+      <VaultReset
+        onCancel={() => setIsResetting(false)}
+        onResetSuccess={() => {
+          setIsResetting(false);
+          setPassword("");
+        }}
+      />
+    );
+  }
 
   return (
     <div className="flex justify-center items-center py-12 px-4">
@@ -102,17 +93,17 @@ export default function VaultLock({ onUnlock, hasVaultPassword, onPasswordSet }:
             <Lock size={32} />
           </div>
           <h2 className="text-xl font-bold text-white">
-            {!isSetupMode ? "Secret Vault" : (isResetting ? "Reset Master Password" : "Create Secret Vault")}
+            {isSetupMode ? "Create Secret Vault" : "Secret Vault"}
           </h2>
           <p className="text-sm text-white/50">
-            {!isSetupMode
-              ? "Verify your master password to access encrypted notes."
-              : "Create a master password to encrypt and secure your notes."}
+            {isSetupMode
+              ? "Create a master password to encrypt and secure your notes."
+              : "Verify your master password to access encrypted notes."}
           </p>
         </CardHeader>
 
         <CardBody className="py-4">
-          <form onSubmit={!isSetupMode ? handleVerify : handleSetup} className="space-y-4">
+          <form onSubmit={isSetupMode ? handleSetup : handleVerify} className="space-y-4">
             <Input
               type="password"
               label="Master Password"
@@ -126,7 +117,6 @@ export default function VaultLock({ onUnlock, hasVaultPassword, onPasswordSet }:
                 label: "text-purple-300/70",
               }}
             />
-
             {isSetupMode && (
               <Input
                 type="password"
@@ -142,13 +132,11 @@ export default function VaultLock({ onUnlock, hasVaultPassword, onPasswordSet }:
                 }}
               />
             )}
-
             {error && (
               <p className="text-xs text-red-400 text-center font-medium bg-red-500/10 border border-red-500/20 py-2.5 px-3 rounded-xl">
                 {error}
               </p>
             )}
-
             <Button
               type="submit"
               color="primary"
@@ -156,7 +144,7 @@ export default function VaultLock({ onUnlock, hasVaultPassword, onPasswordSet }:
               endContent={loading ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
               isDisabled={loading}
             >
-              {!isSetupMode ? "Unlock Vault" : (isResetting ? "Reset Password" : "Create Vault")}
+              {isSetupMode ? "Create Vault" : "Unlock Vault"}
             </Button>
           </form>
 
@@ -166,10 +154,10 @@ export default function VaultLock({ onUnlock, hasVaultPassword, onPasswordSet }:
                 type="button"
                 onClick={handleResetRequest}
                 disabled={loading}
-                className="text-xs text-purple-300/70 hover:text-purple-300 font-semibold underline underline-offset-4 flex items-center gap-1.5 transition-colors"
+                className="text-xs text-purple-300/70 hover:text-purple-300 font-semibold underline underline-offset-4 flex items-center gap-1.5 transition-colors disabled:opacity-40"
               >
                 <KeyRound size={12} />
-                <span>Forgot password?</span>
+                <span>Forgot password? Send reset code to my email</span>
               </button>
             </div>
           )}

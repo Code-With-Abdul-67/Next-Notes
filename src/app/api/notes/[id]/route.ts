@@ -23,7 +23,7 @@ export async function PUT(request: Request, context: any) {
     }
 
     const body = await request.json();
-    const { title, content, isPinned, isDeleted, isLocked, encryptedData } = body;
+    const { title, content, isPinned, isDeleted, isLocked, encryptedData, color } = body;
 
     const updatedNote = await prisma.note.update({
       where: { id },
@@ -31,6 +31,7 @@ export async function PUT(request: Request, context: any) {
         title: title !== undefined ? title : note.title,
         content: content !== undefined ? content : note.content,
         encryptedData: encryptedData !== undefined ? encryptedData : note.encryptedData,
+        color: color !== undefined ? color : note.color,
         isPinned: isPinned !== undefined ? isPinned : note.isPinned,
         isDeleted: isDeleted !== undefined ? isDeleted : note.isDeleted,
         isLocked: isLocked !== undefined ? isLocked : note.isLocked,
