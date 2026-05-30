@@ -283,9 +283,14 @@ export default function Dashboard() {
 
   const handleLockToggle = (id: string, currentVal: boolean) => {
     if (!currentVal) {
-      // Moving INTO vault
+      // Moving INTO vault — check if vault exists first
+      if (!hasVaultPassword) {
+        // No vault set up yet — redirect user to vault section to create one
+        handleViewChange("vault");
+        return;
+      }
       if (!vaultPasswordRef.current) {
-        // Vault not unlocked yet — show inline password modal, store pending note
+        // Vault exists but not unlocked — show inline password modal
         const note = notes.find((n) => n.id === id);
         if (note) {
           pendingVaultLockRef.current = { id: note.id, title: note.title, content: note.content };
@@ -383,6 +388,12 @@ export default function Dashboard() {
     setConfirmAction({ type: "emptyBin", id: "" });
   };
 
+  const handleLockVault = () => {
+    setVaultUnlocked(false);
+    setVaultPasswordSync(null);
+    if (currentView === "vault") setCurrentView("all");
+  };
+
   const handleNewNote = () => {
     setEditingNote(null);
     setEditorOpen(true);
@@ -415,9 +426,10 @@ export default function Dashboard() {
         onViewChange={handleViewChange}
         onNewNote={handleNewNote}
         hasVaultPassword={hasVaultPassword}
+        vaultUnlocked={vaultUnlocked}
+        onLockVault={handleLockVault}
         onDeleteVault={handleDeleteVault}
         onDeleteAccount={handleDeleteAccount}
-        noteCounts={{ all: notes.length, vault: 0, bin: 0 }}
         user={{
           name: session?.user?.name,
           email: session?.user?.email,

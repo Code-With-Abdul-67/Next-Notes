@@ -1,6 +1,6 @@
 "use client";
 
-import { Folder, Lock, Trash2, LogOut, Plus, ChevronLeft, ChevronRight, Menu, UserX, AlertTriangle } from "lucide-react";
+import { Folder, Lock, Trash2, LogOut, Plus, ChevronLeft, ChevronRight, Menu, UserX, AlertTriangle, LockKeyhole } from "lucide-react";
 import { Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from "@nextui-org/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { signOut } from "next-auth/react";
@@ -16,8 +16,9 @@ interface SidebarProps {
     name?: string | null;
     email?: string | null;
   };
-  noteCounts?: { all: number; vault: number; bin: number };
   hasVaultPassword: boolean;
+  vaultUnlocked: boolean;
+  onLockVault: () => void;
   onDeleteVault: () => void;
   onDeleteAccount?: () => void;
 }
@@ -27,14 +28,16 @@ export default function Sidebar({
   onViewChange,
   onNewNote,
   user,
-  noteCounts,
   hasVaultPassword,
+  vaultUnlocked,
+  onLockVault,
   onDeleteVault,
   onDeleteAccount,
 }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
+  const [lockVaultConfirmOpen, setLockVaultConfirmOpen] = useState(false);
 
   const navItems = [
     {
@@ -186,6 +189,15 @@ export default function Sidebar({
             </DropdownItem>
 
             <DropdownItem
+              key="lock-vault"
+              className={vaultUnlocked ? "text-amber-400 font-medium data-[hover=true]:bg-amber-500/15 data-[hover=true]:text-amber-300" : "hidden"}
+              startContent={<LockKeyhole size={16} />}
+              onPress={() => setLockVaultConfirmOpen(true)}
+            >
+              Lock Vault
+            </DropdownItem>
+
+            <DropdownItem
               key="delete-vault"
               className={hasVaultPassword ? "text-amber-400 font-medium data-[hover=true]:bg-amber-500/15 data-[hover=true]:text-amber-300" : "hidden"}
               startContent={<AlertTriangle size={16} />}
@@ -275,6 +287,17 @@ export default function Sidebar({
         title="Sign Out?"
         message="Are you sure you want to sign out of NEXT Notes?"
         confirmText="Sign Out"
+        isDestructive={false}
+      />
+
+      {/* Lock Vault confirmation modal */}
+      <ConfirmationModal
+        isOpen={lockVaultConfirmOpen}
+        onClose={() => setLockVaultConfirmOpen(false)}
+        onConfirm={onLockVault}
+        title="Lock Vault?"
+        message="This will lock the vault and clear the password from memory. You'll need to enter your master password again to access vault notes."
+        confirmText="Lock Vault"
         isDestructive={false}
       />
     </>
