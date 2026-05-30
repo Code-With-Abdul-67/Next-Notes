@@ -4,19 +4,10 @@ import { Pin, Trash2, RotateCcw, Lock, Unlock, Calendar } from "lucide-react";
 import { Button } from "@nextui-org/react";
 import { motion } from "framer-motion";
 
-const COLOR_MAP: Record<string, { border: string; glow: string; accent: string }> = {
-  purple: { border: "border-purple-500/40", glow: "hover:shadow-purple-500/20", accent: "bg-purple-500/10" },
-  blue:   { border: "border-blue-500/40",   glow: "hover:shadow-blue-500/20",   accent: "bg-blue-500/10" },
-  green:  { border: "border-green-500/40",  glow: "hover:shadow-green-500/20",  accent: "bg-green-500/10" },
-  yellow: { border: "border-yellow-500/40", glow: "hover:shadow-yellow-500/20", accent: "bg-yellow-500/10" },
-  red:    { border: "border-red-500/40",    glow: "hover:shadow-red-500/20",    accent: "bg-red-500/10" },
-};
-
 interface Note {
   id: string;
   title: string;
   content: string;
-  color?: string | null;
   isPinned: boolean;
   isLocked: boolean;
   isDeleted: boolean;
@@ -48,8 +39,6 @@ export default function NoteCard({
     ? note.content.length > 120 ? note.content.slice(0, 120) + "..." : note.content
     : "No additional text";
 
-  const colorStyle = note.color ? COLOR_MAP[note.color] : null;
-
   return (
     <motion.div
       layout
@@ -61,17 +50,8 @@ export default function NoteCard({
     >
       <div
         onClick={() => view !== "bin" && onEdit(note)}
-        className={`group relative overflow-hidden glass-card w-full h-48 flex flex-col justify-between rounded-xl border bg-white/5 backdrop-blur-md shadow-lg transition-all duration-300 cursor-pointer hover:bg-white/10 hover:shadow-xl ${
-          colorStyle
-            ? `${colorStyle.border} ${colorStyle.glow}`
-            : "border-white/5 hover:border-white/20 hover:shadow-purple-500/5"
-        }`}
+        className="group relative overflow-hidden glass-card w-full h-48 flex flex-col justify-between rounded-xl border border-white/5 bg-white/5 backdrop-blur-md shadow-lg transition-all duration-300 cursor-pointer hover:bg-white/10 hover:border-white/20 hover:shadow-purple-500/5"
       >
-        {/* Color accent top bar */}
-        {colorStyle && (
-          <div className={`absolute top-0 left-0 right-0 h-0.5 ${colorStyle.accent} rounded-t-xl`} />
-        )}
-
         {/* Sheen */}
         <div className="absolute inset-0 pointer-events-none z-0">
           <div className="absolute -inset-full top-0 block w-1/2 h-full bg-gradient-to-r from-transparent via-white/[0.06] to-transparent skew-x-12 transform -translate-x-full transition-transform duration-1000 ease-out group-hover:translate-x-[400%]" />

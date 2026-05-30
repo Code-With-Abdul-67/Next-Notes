@@ -19,7 +19,6 @@ interface Note {
   id: string;
   title: string;
   content: string;
-  color?: string | null;
   encryptedData?: string | null;
   isPinned: boolean;
   isLocked: boolean;
@@ -163,8 +162,7 @@ export default function Dashboard() {
     title: string,
     content: string,
     isPinned: boolean,
-    isLocked: boolean,
-    color: string | null = null
+    isLocked: boolean
   ) => {
     setIsSaving(true);
     try {
@@ -192,27 +190,13 @@ export default function Dashboard() {
         await fetch(`/api/notes/${id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            title: storedTitle,
-            content: storedContent,
-            encryptedData,
-            isPinned,
-            isLocked,
-            color,
-          }),
+          body: JSON.stringify({ title: storedTitle, content: storedContent, encryptedData, isPinned, isLocked }),
         });
       } else {
         await fetch("/api/notes", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            title: storedTitle,
-            content: storedContent,
-            encryptedData,
-            isPinned,
-            isLocked,
-            color,
-          }),
+          body: JSON.stringify({ title: storedTitle, content: storedContent, encryptedData, isPinned, isLocked }),
         });
       }
       fetchNotes();
