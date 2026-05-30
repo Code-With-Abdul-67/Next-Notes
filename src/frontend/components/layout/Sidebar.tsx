@@ -103,16 +103,22 @@ export default function Sidebar({
         </div>
 
         {/* New Note Button */}
-        <Button
-          color="primary"
-          className={`w-full font-semibold shadow-lg shadow-purple-500/20 bg-primary ${
-            isCollapsed ? "min-w-0 p-0 h-10 w-10" : ""
-          }`}
-          onPress={onNewNote}
-          startContent={<Plus size={18} />}
+        <motion.div
+          whileHover={{ scale: 1.03, y: -1 }}
+          whileTap={{ scale: 0.97 }}
+          transition={{ type: "spring", stiffness: 400, damping: 20 }}
         >
-          {!isCollapsed && "New Note"}
-        </Button>
+          <Button
+            color="primary"
+            className={`w-full font-semibold shadow-lg shadow-purple-500/30 bg-primary transition-shadow duration-200 hover:shadow-purple-500/50 hover:shadow-xl ${
+              isCollapsed ? "min-w-0 p-0 h-10 w-10" : ""
+            }`}
+            onPress={onNewNote}
+            startContent={<Plus size={18} />}
+          >
+            {!isCollapsed && "New Note"}
+          </Button>
+        </motion.div>
 
         {/* Navigation */}
         <nav className="space-y-1">
