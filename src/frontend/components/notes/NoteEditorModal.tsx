@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, Input, Textarea, Tooltip } from "@nextui-org/react";
+import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, Input, Textarea } from "@nextui-org/react";
 import { Pin, Lock, Unlock, Loader2, Save } from "lucide-react";
 
 interface Note {
@@ -75,33 +75,27 @@ export default function NoteEditorModal({
                 {note ? "Edit Note" : "Create Note"}
               </span>
               <div className="flex items-center gap-2 mr-6">
-                <Tooltip content={isPinned ? "Unpin Note" : "Pin Note"}>
-                  <Button
-                    isIconOnly
-                    size="sm"
-                    variant="light"
-                    className={`${
-                      isPinned ? "text-purple-400" : "text-white/30 hover:text-white"
-                    }`}
-                    onClick={() => setIsPinned(!isPinned)}
-                  >
-                    <Pin size={16} fill={isPinned ? "currentColor" : "none"} />
-                  </Button>
-                </Tooltip>
+                <Button
+                  isIconOnly
+                  size="sm"
+                  variant="light"
+                  aria-label={isPinned ? "Unpin Note" : "Pin Note"}
+                  className={isPinned ? "text-purple-400" : "text-white/30 hover:text-white"}
+                  onPress={() => setIsPinned(!isPinned)}
+                >
+                  <Pin size={16} fill={isPinned ? "currentColor" : "none"} />
+                </Button>
 
-                <Tooltip content={isLocked ? "Unlock Note" : "Lock Note (Send to Vault)"}>
-                  <Button
-                    isIconOnly
-                    size="sm"
-                    variant="light"
-                    className={`${
-                      isLocked ? "text-amber-400" : "text-white/30 hover:text-amber-400"
-                    }`}
-                    onClick={() => setIsLocked(!isLocked)}
-                  >
-                    {isLocked ? <Lock size={15} /> : <Unlock size={15} />}
-                  </Button>
-                </Tooltip>
+                <Button
+                  isIconOnly
+                  size="sm"
+                  variant="light"
+                  aria-label={isLocked ? "Unlock Note" : "Lock Note (Send to Vault)"}
+                  className={isLocked ? "text-amber-400" : "text-white/30 hover:text-amber-400"}
+                  onPress={() => setIsLocked(!isLocked)}
+                >
+                  {isLocked ? <Lock size={15} /> : <Unlock size={15} />}
+                </Button>
               </div>
             </ModalHeader>
 
@@ -148,17 +142,17 @@ export default function NoteEditorModal({
               </span>
 
               <div className="flex gap-2">
-                <Button 
-                  variant="light" 
+                <Button
+                  variant="light"
                   className="text-white/60 hover:text-white hover:bg-white/5 font-semibold"
-                  onClick={onClose}
+                  onPress={onClose}
                 >
                   Cancel
                 </Button>
                 <Button
                   color="primary"
                   className="font-semibold shadow-lg shadow-purple-500/10 bg-primary"
-                  onClick={handleSave}
+                  onPress={handleSave}
                   startContent={isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
                   isDisabled={isSaving}
                 >

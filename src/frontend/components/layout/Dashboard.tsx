@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { Input, Spinner, Button } from "@nextui-org/react";
-import { Search, FileText, Trash2, Lock, Trash } from "lucide-react";
+import { Search, FileText, Trash2, Lock, Trash, Plus } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import Sidebar from "@/frontend/components/layout/Sidebar";
 import NoteCard from "@/frontend/components/notes/NoteCard";
@@ -85,6 +85,8 @@ export default function Dashboard() {
           body: JSON.stringify({ password: "___check___" }),
         });
         const data = await res.json();
+        // notInitialized means no vault password set yet
+        // any other response (wrong password = 401, or success) means vault exists
         setHasVaultPassword(!data.notInitialized);
       } catch {
         setHasVaultPassword(false);
@@ -438,7 +440,7 @@ export default function Dashboard() {
                   color="danger"
                   startContent={<Trash size={14} />}
                   className="ml-2 text-xs font-semibold text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20"
-                  onClick={handleEmptyBin}
+                  onPress={handleEmptyBin}
                 >
                   Empty Bin
                 </Button>
@@ -490,10 +492,20 @@ export default function Dashboard() {
                   <Spinner color="secondary" size="lg" />
                 </div>
               ) : notes.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-64 text-center p-4">
+                <div className="flex flex-col items-center justify-center h-64 text-center p-4 gap-4">
                   <p className="text-white/40 text-sm max-w-sm">
                     {viewConfig[currentView].emptyText}
                   </p>
+                  {(currentView === "all" || currentView === "vault") && (
+                    <Button
+                      color="primary"
+                      className="md:hidden font-semibold shadow-lg shadow-purple-500/20 bg-primary"
+                      startContent={<Plus size={18} />}
+                      onPress={handleNewNote}
+                    >
+                      {currentView === "vault" ? "Add to Vault" : "Create Note"}
+                    </Button>
+                  )}
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">

@@ -53,17 +53,17 @@ export default function ConfirmationModal({
               <p className="text-white/70 text-sm">{message}</p>
             </ModalBody>
             <ModalFooter>
-              <Button 
-                variant="light" 
+              <Button
+                variant="light"
                 className="text-white/60 hover:text-white hover:bg-white/5"
-                onClick={onClose}
+                onPress={onClose}
               >
                 No, Cancel
               </Button>
-              <Button 
+              <Button
                 color={isDestructive ? "danger" : "primary"}
                 className="font-semibold shadow-lg"
-                onClick={() => {
+                onPress={() => {
                   onConfirm();
                   onClose();
                 }}
