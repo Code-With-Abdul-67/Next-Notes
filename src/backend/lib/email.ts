@@ -1,14 +1,17 @@
 import nodemailer from "nodemailer";
 
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.SMTP_EMAIL,
-    pass: process.env.SMTP_PASSWORD,
-  },
-});
-
 export async function sendVaultResetEmail(toEmail: string, code: string) {
+  // Create transporter fresh each call so env vars are always current
+  const transporter = nodemailer.createTransport({
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true, // SSL
+    auth: {
+      user: process.env.SMTP_EMAIL,
+      pass: process.env.SMTP_PASSWORD,
+    },
+  });
+
   await transporter.sendMail({
     from: `"NEXT Notes" <${process.env.SMTP_EMAIL}>`,
     to: toEmail,

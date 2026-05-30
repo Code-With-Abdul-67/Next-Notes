@@ -13,7 +13,6 @@ export async function POST(request: Request) {
   const email = session.user.email;
 
   try {
-    // 6-digit code, expires in 5 minutes
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
 
@@ -26,8 +25,12 @@ export async function POST(request: Request) {
     await sendVaultResetEmail(email, code);
 
     return NextResponse.json({ message: "Verification code sent to your email" });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Vault reset request error:", error);
-    return NextResponse.json({ error: "Failed to send reset email. Please try again." }, { status: 500 });
+    // Surface the real error message in development for easier debugging
+    const message = process.env.NODE_ENV === "development"
+      ? `Email error: ${error?.message ?? String(error)}`
+      : "Failed to send reset email. Please try again.";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
