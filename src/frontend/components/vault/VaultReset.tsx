@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Input, Card, CardBody, CardHeader } from "@nextui-org/react";
-import { KeyRound, Loader2, ShieldCheck, ArrowLeft } from "lucide-react";
+import { KeyRound, Loader2, ShieldCheck, ArrowLeft, AlertCircle } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface VaultResetProps {
   onCancel: () => void;
@@ -14,25 +15,27 @@ export default function VaultReset({ onCancel, onResetSuccess }: VaultResetProps
   const [code, setCode] = useState(["", "", "", "", "", ""]);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [timeLeft, setTimeLeft] = useState(300); // 5 minutes
+  const [timeLeft, setTimeLeft] = useState(300);
   const [isExpired, setIsExpired] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [verifiedCode, setVerifiedCode] = useState("");
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  // 5-minute countdown
   useEffect(() => {
     if (timeLeft <= 0) { setIsExpired(true); return; }
     const timer = setTimeout(() => setTimeLeft((t) => t - 1), 1000);
     return () => clearTimeout(timer);
   }, [timeLeft]);
 
-  const formatTime = (s: number) => {
-    const m = Math.floor(s / 60);
-    const sec = s % 60;
-    return `${m}:${sec.toString().padStart(2, "0")}`;
-  };
+  // Auto-dismiss error toast after 4s
+  useEffect(() => {
+    if (!error) return;
+    const t = setTimeout(() => setError(""), 4000);
+    return () => clearTimeout(t);
+  }, [error]);
+
+  const formatTime = (s: number) => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, "0")}`;
 
   const handleCodeChange = (index: number, value: string) => {
     if (!/^\d*$/.test(value)) return;
@@ -43,9 +46,7 @@ export default function VaultReset({ onCancel, onResetSuccess }: VaultResetProps
   };
 
   const handleCodeKeyDown = (index: number, e: React.KeyboardEvent) => {
-    if (e.key === "Backspace" && !code[index] && index > 0) {
-      inputRefs.current[index - 1]?.focus();
-    }
+    if (e.key === "Backspace" && !code[index] && index > 0) inputRefs.current[index - 1]?.focus();
   };
 
   const handleCodePaste = (e: React.ClipboardEvent) => {
@@ -89,149 +90,155 @@ export default function VaultReset({ onCancel, onResetSuccess }: VaultResetProps
   const timerColor = timeLeft > 120 ? "#8B5CF6" : timeLeft > 60 ? "#F59E0B" : "#EF4444";
 
   return (
-    <div className="flex justify-center items-center py-12 px-4">
-      <Card className="glass-panel w-full max-w-md border border-white/10 rounded-2xl p-6 bg-black/40">
-        <CardHeader className="flex flex-col items-center text-center pb-2 gap-2">
-          <button
-            onClick={onCancel}
-            className="self-start flex items-center gap-1.5 text-white/40 hover:text-white/80 text-xs font-medium transition-colors mb-2"
+    <>
+      {/* Error toast — top-right, auto-dismisses */}
+      <AnimatePresence>
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, x: 80, scale: 0.95 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            exit={{ opacity: 0, x: 40, scale: 0.95 }}
+            transition={{ type: "spring", stiffness: 380, damping: 30 }}
+            className="fixed top-5 right-5 z-[9999] flex items-center gap-2.5 px-4 py-3 rounded-xl border border-red-500/40 bg-red-500/15 backdrop-blur-md shadow-lg text-sm text-white/90 font-medium max-w-xs cursor-pointer"
+            onClick={() => setError("")}
           >
-            <ArrowLeft size={14} />
-            <span>Back to Vault</span>
-          </button>
+            <AlertCircle size={15} className="text-red-400 shrink-0" />
+            <span>{error}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-purple-500/20 to-indigo-500/20 border border-purple-500/30 flex items-center justify-center text-purple-300 mb-2 shadow-lg shadow-purple-500/10">
-            <KeyRound size={32} />
-          </div>
+      <div className="flex justify-center items-center py-12 px-4">
+        <Card className="glass-panel w-full max-w-md border border-white/10 rounded-2xl p-6 bg-black/40">
+          <CardHeader className="flex flex-col items-center text-center pb-2 gap-2">
+            <button
+              onClick={onCancel}
+              className="self-start flex items-center gap-1.5 text-white/40 hover:text-white/80 text-xs font-medium transition-colors mb-2"
+            >
+              <ArrowLeft size={14} />
+              <span>Back to Vault</span>
+            </button>
 
-          <h2 className="text-xl font-bold text-white">
-            {step === "code" ? "Check Your Email" : "Create New Password"}
-          </h2>
-          <p className="text-sm text-white/50 leading-relaxed">
-            {step === "code"
-              ? "A 6-digit code was sent to your registered email. It expires in 5 minutes."
-              : "Enter and confirm your new vault master password."}
-          </p>
-          {step === "password" && (
-            <div className="flex items-start gap-2 bg-amber-500/10 border border-amber-500/20 rounded-xl px-3 py-2.5 text-left mt-1">
-              <span className="text-amber-400 text-base leading-none mt-0.5">⚠️</span>
-              <p className="text-xs text-amber-300/80 leading-relaxed">
-                <strong className="text-amber-300">All vault notes will be permanently deleted.</strong> Because notes are encrypted with your old password, they cannot be recovered after a reset. This cannot be undone.
-              </p>
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-purple-500/20 to-indigo-500/20 border border-purple-500/30 flex items-center justify-center text-purple-300 mb-2 shadow-lg shadow-purple-500/10">
+              <KeyRound size={32} />
             </div>
-          )}
-        </CardHeader>
 
-        <CardBody className="py-4">
-          {step === "code" ? (
-            <div className="space-y-6">
-              {/* Timer */}
-              <div className="flex flex-col items-center gap-3">
-                <div className="relative flex items-center justify-center w-20 h-20">
-                  <svg className="absolute inset-0 rotate-[-90deg]" viewBox="0 0 80 80">
-                    <circle cx="40" cy="40" r="34" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="6" />
-                    <circle
-                      cx="40" cy="40" r="34" fill="none"
-                      stroke={timerColor}
-                      strokeWidth="6"
-                      strokeLinecap="round"
-                      strokeDasharray={`${2 * Math.PI * 34}`}
-                      strokeDashoffset={`${2 * Math.PI * 34 * (1 - timerPercentage / 100)}`}
-                      style={{ transition: "stroke-dashoffset 1s linear, stroke 0.5s ease" }}
-                    />
-                  </svg>
-                  <span style={{ color: timerColor }} className="text-sm font-bold tabular-nums z-10 transition-colors duration-500">
-                    {formatTime(timeLeft)}
-                  </span>
+            <h2 className="text-xl font-bold text-white">
+              {step === "code" ? "Check Your Email" : "Create New Password"}
+            </h2>
+            <p className="text-sm text-white/50 leading-relaxed">
+              {step === "code"
+                ? "A 6-digit code was sent to your registered email. It expires in 5 minutes."
+                : "Enter and confirm your new vault master password."}
+            </p>
+            {step === "password" && (
+              <div className="flex items-start gap-2 bg-amber-500/10 border border-amber-500/20 rounded-xl px-3 py-2.5 text-left mt-1">
+                <span className="text-amber-400 text-base leading-none mt-0.5">⚠️</span>
+                <p className="text-xs text-amber-300/80 leading-relaxed">
+                  <strong className="text-amber-300">All vault notes will be permanently deleted.</strong> Because notes are encrypted with your old password, they cannot be recovered after a reset. This cannot be undone.
+                </p>
+              </div>
+            )}
+          </CardHeader>
+
+          <CardBody className="py-4">
+            {step === "code" ? (
+              <div className="space-y-6">
+                {/* Timer */}
+                <div className="flex flex-col items-center gap-3">
+                  <div className="relative flex items-center justify-center w-20 h-20">
+                    <svg className="absolute inset-0 rotate-[-90deg]" viewBox="0 0 80 80">
+                      <circle cx="40" cy="40" r="34" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="6" />
+                      <circle
+                        cx="40" cy="40" r="34" fill="none"
+                        stroke={timerColor} strokeWidth="6" strokeLinecap="round"
+                        strokeDasharray={`${2 * Math.PI * 34}`}
+                        strokeDashoffset={`${2 * Math.PI * 34 * (1 - timerPercentage / 100)}`}
+                        style={{ transition: "stroke-dashoffset 1s linear, stroke 0.5s ease" }}
+                      />
+                    </svg>
+                    <span style={{ color: timerColor }} className="text-sm font-bold tabular-nums z-10 transition-colors duration-500">
+                      {formatTime(timeLeft)}
+                    </span>
+                  </div>
+                  {isExpired && (
+                    <p className="text-xs text-red-400 font-medium">Code expired. Go back and try again.</p>
+                  )}
                 </div>
-                {isExpired && (
-                  <p className="text-xs text-red-400 font-medium">Code expired. Go back and try again.</p>
-                )}
+
+                {/* OTP inputs */}
+                <div className="flex gap-2 justify-center" onPaste={handleCodePaste}>
+                  {code.map((digit, i) => (
+                    <input
+                      key={i}
+                      ref={(el) => { inputRefs.current[i] = el; }}
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={1}
+                      value={digit}
+                      onChange={(e) => handleCodeChange(i, e.target.value)}
+                      onKeyDown={(e) => handleCodeKeyDown(i, e)}
+                      disabled={isExpired}
+                      className={`w-11 h-12 text-center text-xl font-bold rounded-xl border-2 bg-white/5 backdrop-blur-sm outline-none transition-all ${
+                        digit
+                          ? "border-primary text-white shadow-[0_0_12px_rgba(139,92,246,0.3)]"
+                          : "border-white/10 text-white/40"
+                      } focus:border-primary focus:shadow-[0_0_12px_rgba(139,92,246,0.3)] disabled:opacity-40`}
+                    />
+                  ))}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleVerifyCode}
+                  disabled={isExpired || code.join("").length < 6}
+                  className="btn-sheen w-full h-10 rounded-xl bg-primary text-white font-semibold shadow-lg shadow-purple-500/20 flex items-center justify-center gap-2 transition-all duration-200 hover:brightness-110 hover:shadow-purple-500/40 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <ShieldCheck size={16} />
+                  Verify Code
+                </button>
               </div>
-
-              {/* OTP inputs */}
-              <div className="flex gap-2 justify-center" onPaste={handleCodePaste}>
-                {code.map((digit, i) => (
-                  <input
-                    key={i}
-                    ref={(el) => { inputRefs.current[i] = el; }}
-                    type="text"
-                    inputMode="numeric"
-                    maxLength={1}
-                    value={digit}
-                    onChange={(e) => handleCodeChange(i, e.target.value)}
-                    onKeyDown={(e) => handleCodeKeyDown(i, e)}
-                    disabled={isExpired}
-                    className={`w-11 h-12 text-center text-xl font-bold rounded-xl border-2 bg-white/5 backdrop-blur-sm outline-none transition-all ${
-                      digit
-                        ? "border-primary text-white shadow-[0_0_12px_rgba(139,92,246,0.3)]"
-                        : "border-white/10 text-white/40"
-                    } focus:border-primary focus:shadow-[0_0_12px_rgba(139,92,246,0.3)] disabled:opacity-40`}
-                  />
-                ))}
-              </div>
-
-              {error && (
-                <p className="text-xs text-red-400 text-center bg-red-500/10 border border-red-500/20 py-2 px-3 rounded-xl">
-                  {error}
-                </p>
-              )}
-
-              <button
-                type="button"
-                onClick={handleVerifyCode}
-                disabled={isExpired || code.join("").length < 6}
-                className="btn-sheen w-full h-10 rounded-xl bg-primary text-white font-semibold shadow-lg shadow-purple-500/20 flex items-center justify-center gap-2 transition-all duration-200 hover:brightness-110 hover:shadow-purple-500/40 disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                <ShieldCheck size={16} />
-                Verify Code
-              </button>
-            </div>
-          ) : (
-            <form onSubmit={handlePasswordReset} className="space-y-4">
-              <Input
-                type="password"
-                label="New Master Password"
-                placeholder="Min. 4 characters"
-                variant="flat"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                classNames={{
-                  inputWrapper: "glass-input",
-                  input: "text-white placeholder:text-white/20",
-                  label: "text-purple-300/70",
-                }}
-              />
-              <Input
-                type="password"
-                label="Confirm New Password"
-                placeholder="••••••••"
-                variant="flat"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                classNames={{
-                  inputWrapper: "glass-input",
-                  input: "text-white placeholder:text-white/20",
-                  label: "text-purple-300/70",
-                }}
-              />
-              {error && (
-                <p className="text-xs text-red-400 text-center bg-red-500/10 border border-red-500/20 py-2 px-3 rounded-xl">
-                  {error}
-                </p>
-              )}
-              <button
-                type="submit"
-                disabled={loading}
-                className="btn-sheen w-full h-10 rounded-xl bg-primary text-white font-semibold shadow-lg shadow-purple-500/20 flex items-center justify-center gap-2 transition-all duration-200 hover:brightness-110 hover:shadow-purple-500/40 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading ? <Loader2 size={16} className="animate-spin" /> : <ShieldCheck size={16} />}
-                Reset Vault Password
-              </button>
-            </form>
-          )}
-        </CardBody>
-      </Card>
-    </div>
+            ) : (
+              <form onSubmit={handlePasswordReset} className="space-y-4">
+                <Input
+                  type="password"
+                  label="New Master Password"
+                  placeholder="Min. 4 characters"
+                  variant="flat"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  classNames={{
+                    inputWrapper: "glass-input",
+                    input: "text-white placeholder:text-white/20",
+                    label: "text-purple-300/70",
+                  }}
+                />
+                <Input
+                  type="password"
+                  label="Confirm New Password"
+                  placeholder="••••••••"
+                  variant="flat"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  classNames={{
+                    inputWrapper: "glass-input",
+                    input: "text-white placeholder:text-white/20",
+                    label: "text-purple-300/70",
+                  }}
+                />
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="btn-sheen w-full h-10 rounded-xl bg-primary text-white font-semibold shadow-lg shadow-purple-500/20 flex items-center justify-center gap-2 transition-all duration-200 hover:brightness-110 hover:shadow-purple-500/40 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? <Loader2 size={16} className="animate-spin" /> : <ShieldCheck size={16} />}
+                  Reset Vault Password
+                </button>
+              </form>
+            )}
+          </CardBody>
+        </Card>
+      </div>
+    </>
   );
 }

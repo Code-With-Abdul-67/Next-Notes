@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { Lock, KeyRound, Loader2, ArrowRight } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Lock, KeyRound, Loader2, ArrowRight, AlertCircle } from "lucide-react";
 import { Input, Card, CardBody, CardHeader } from "@nextui-org/react";
+import { motion, AnimatePresence } from "framer-motion";
 import VaultReset from "./VaultReset";
 
 interface VaultLockProps {
@@ -18,6 +19,13 @@ export default function VaultLock({ onUnlock, hasVaultPassword, onPasswordSet }:
   const [loading, setLoading] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const isSetupMode = !hasVaultPassword;
+
+  // Auto-dismiss error toast after 4 seconds
+  useEffect(() => {
+    if (!error) return;
+    const t = setTimeout(() => setError(""), 4000);
+    return () => clearTimeout(t);
+  }, [error]);
 
   const handleSetup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -132,11 +140,21 @@ export default function VaultLock({ onUnlock, hasVaultPassword, onPasswordSet }:
                 }}
               />
             )}
-            {error && (
-              <p className="text-xs text-red-400 text-center font-medium bg-red-500/10 border border-red-500/20 py-2.5 px-3 rounded-xl">
-                {error}
-              </p>
-            )}
+            <AnimatePresence>
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, x: 80, scale: 0.95 }}
+                  animate={{ opacity: 1, x: 0, scale: 1 }}
+                  exit={{ opacity: 0, x: 40, scale: 0.95 }}
+                  transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                  className="fixed top-5 right-5 z-[9999] flex items-center gap-2.5 px-4 py-3 rounded-xl border border-red-500/40 bg-red-500/15 backdrop-blur-md shadow-lg text-sm text-white/90 font-medium max-w-xs cursor-pointer"
+                  onClick={() => setError("")}
+                >
+                  <AlertCircle size={15} className="text-red-400 shrink-0" />
+                  <span>{error}</span>
+                </motion.div>
+              )}
+            </AnimatePresence>
             <button
               type="submit"
               disabled={loading}
