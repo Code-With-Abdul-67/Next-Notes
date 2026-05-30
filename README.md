@@ -1,46 +1,89 @@
-**📝 NEXT Notes**
+📝 NEXT Notes
 
-NEXT Notes is a high-performance, full-stack notes application designed to help you capture, organize, and secure your thoughts seamlessly. With an intuitive, animated interface and powerful backend architecture, it provides a modern note-taking experience with advanced AI integrations and strict privacy controls.
+A high-performance, full-stack notes application designed to help users capture, organize, and secure their thoughts seamlessly. NEXT Notes combines a modern user experience with powerful backend architecture, AI-assisted workflows, and advanced privacy controls.
 
+📖 Table of Contents
+Introduction
+Tech Stack
+Features
+Installation
+Environment Variables
+Database Setup
+Usage
+Project Structure
+Recent Improvements
+Security Features
+Troubleshooting
+Deployment
+Contributing
+License
+📌 Introduction
+
+NEXT Notes is a modern note-taking platform built with Next.js, PostgreSQL, Prisma, and Google Gemini AI. It enables users to create, manage, search, secure, and recover notes while maintaining a responsive and visually engaging experience.
+
+The application prioritizes:
+
+Performance
+Security
+User experience
+AI-powered productivity
+Data privacy
 🚀 Tech Stack
-Framework: Next.js (App Router / API Routes)
+Category	Technology
+Framework	Next.js (App Router & API Routes)
+Styling	Tailwind CSS
+UI Components	NextUI
+Animations	Framer Motion
+Database	PostgreSQL
+ORM	Prisma
+Authentication	NextAuth.js
+AI Integration	Google Gemini AI
+Icons	Lucide React
+Deployment	Vercel
+✨ Features
+🔐 Secure Authentication
+User registration and login
+Session management via NextAuth.js
+Protected routes and API endpoints
+Secure authentication flow
+🤖 Gemini AI Assistant
+AI-powered note assistance
+Brainstorming support
+Content refinement
+Structured note generation
+🔒 The Vault
 
-Styling: Tailwind CSS & NextUI
+A dedicated password-protected area for sensitive content.
 
-Animations: Framer Motion
+Features include:
 
-Database: PostgreSQL with Prisma ORM
+Locked notes
+Isolated data access
+Separate visibility rules
+Enhanced privacy controls
+🗑️ Trash & Recovery
 
-Authentication: NextAuth.js
+Never lose important content.
 
-AI Integration: Google Gemini AI
+Soft-delete functionality
+Restore deleted notes
+Organized trash management
+🔍 Smart Search & Filtering
 
-Icons: Lucide React
+Quickly find information across your workspace.
 
-Deployment: Vercel
+Instant search
+Note filtering
+Efficient content discovery
+🎨 Responsive & Animated UI
 
-✨ Key Features
-🔐 Secure Authentication: Seamless and secure user login, registration, and session management powered by NextAuth.
+Designed for desktop and mobile devices.
 
-🤖 Gemini AI Assistant: Integrated AI capabilities to help brainstorm, structure, and refine your notes.
-
-🔒 The Vault: A dedicated, password-protected space to lock away your most sensitive notes. Vault contents are kept strictly isolated from standard views.
-
-🗑️ Trash & Recovery: Accidental deletion? No problem. Soft-delete notes into the Trash bin and restore them whenever needed.
-
-🔍 Smart Search & Filtering: Instantly locate specific notes across your entire workspace.
-
-🎨 Responsive & Animated UI: A beautiful, responsive interface featuring interactive sidebar navigation, modular note cards, and smooth modal transitions.
-
-⚡ Real-time Updates: Dynamic UI state management for immediate feedback when creating, editing, or locking notes.
-
-🐛 Recent Bug Fixes & Improvements
-✅ NextAuth Route Handling: Fixed explicit explicit GET and POST route exports for the NextAuth handler to ensure stable authentication flows.
-
-✅ Vault Data Isolation: Resolved database query issues where Vault contents were not properly mapping; ensured locked notes remain strictly hidden from the primary dashboard feed.
-
-✅ API Route Protection: Fortified server-side endpoints (/api/notes) to strictly verify active sessions and prevent unauthorized access.
-
-✅ Modal State Management: Fixed UI overlapping and state synchronization issues between the NoteEditorModal and VaultLock components.
-
-✅ Database Schema Optimizations: Refined Prisma schema relationships to better handle complex user interactions with notes, vault states, and trash flags.
+Interactive sidebar navigation
+Modular note cards
+Smooth modal transitions
+Responsive layouts
+⚡ Real-Time Updates
+Dynamic state management
+Immediate UI feedback
+Fast note creation and editing workflows
