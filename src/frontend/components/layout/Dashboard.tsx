@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { Input, Spinner, Button } from "@nextui-org/react";
-import { Search, FileText, Trash2, Lock, Trash, Plus } from "lucide-react";
+import { Search, FileText, Trash2, Lock, Trash, Plus, LockKeyhole } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import Sidebar from "@/frontend/components/layout/Sidebar";
 import NoteCard from "@/frontend/components/notes/NoteCard";
@@ -412,12 +412,13 @@ export default function Dashboard() {
   };
 
   const viewConfig = {
-    all: { title: "All Notes", icon: FileText, emptyText: "No notes yet. Create your first note!" },
-    vault: { title: "Secret Vault", icon: Lock, emptyText: "Your vault is empty. Lock notes to keep them private." },
-    bin: { title: "Recycle Bin", icon: Trash2, emptyText: "Recycle bin is empty." },
+    all:   { title: "All Notes",    icon: FileText, iconColor: "text-blue-400",  emptyText: "No notes yet. Create your first note!" },
+    vault: { title: "Secret Vault", icon: Lock,     iconColor: "text-amber-400", emptyText: "Your vault is empty. Lock notes to keep them private." },
+    bin:   { title: "Recycle Bin",  icon: Trash2,   iconColor: "text-red-400",   emptyText: "Recycle bin is empty." },
   };
 
   const ViewIcon = viewConfig[currentView].icon;
+  const [lockVaultConfirm, setLockVaultConfirm] = useState(false);
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen">
@@ -426,8 +427,6 @@ export default function Dashboard() {
         onViewChange={handleViewChange}
         onNewNote={handleNewNote}
         hasVaultPassword={hasVaultPassword}
-        vaultUnlocked={vaultUnlocked}
-        onLockVault={handleLockVault}
         onDeleteVault={handleDeleteVault}
         onDeleteAccount={handleDeleteAccount}
         user={{
@@ -440,12 +439,24 @@ export default function Dashboard() {
         <header className="sticky top-0 md:top-0 z-20 px-6 py-4 border-b border-white/5 bg-black/20 backdrop-blur-lg">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center gap-3">
-              <ViewIcon size={22} className="text-purple-400" />
+              <ViewIcon size={22} className={viewConfig[currentView].iconColor} />
               <h1 className="text-xl font-bold text-white">{viewConfig[currentView].title}</h1>
               {!loading && (
                 <span className="text-xs px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-white/40 font-medium">
                   {notes.length}
                 </span>
+              )}
+              {currentView === "vault" && vaultUnlocked && (
+                <button
+                  onClick={() => setLockVaultConfirm(true)}
+                  className="group relative overflow-hidden ml-2 flex items-center gap-1.5 px-3 h-7 rounded-lg text-xs font-semibold text-amber-400 bg-amber-500/10 border border-amber-500/20 transition-all duration-200 hover:bg-amber-500/20 hover:border-amber-500/40"
+                >
+                  <div className="absolute inset-0 pointer-events-none z-0">
+                    <div className="absolute -inset-full top-0 block w-1/2 h-full bg-gradient-to-r from-transparent via-amber-400/[0.15] to-transparent skew-x-12 transform -translate-x-full transition-transform duration-700 ease-out group-hover:translate-x-[400%]" />
+                  </div>
+                  <LockKeyhole size={13} className="relative z-10" />
+                  <span className="relative z-10">Lock Vault</span>
+                </button>
               )}
               {currentView === "bin" && !loading && notes.length > 0 && (
                 <Button
@@ -682,6 +693,16 @@ export default function Dashboard() {
         </div>
         <Plus size={24} className="relative z-10" />
       </button>
+
+      <ConfirmationModal
+        isOpen={lockVaultConfirm}
+        onClose={() => setLockVaultConfirm(false)}
+        onConfirm={handleLockVault}
+        title="Lock Vault?"
+        message="This will lock the vault and clear the password from memory. You'll need to enter your master password again to access vault notes."
+        confirmText="Lock Vault"
+        isDestructive={false}
+      />
 
       <Toast toasts={toasts} onRemove={removeToast} />
     </div>
