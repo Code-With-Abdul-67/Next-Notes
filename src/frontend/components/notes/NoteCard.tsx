@@ -1,7 +1,6 @@
 "use client";
 
-import { Pin, Trash2, RotateCcw, Lock, Unlock, Calendar } from "lucide-react";
-import { Button } from "@nextui-org/react";
+import { Pin, Trash2, RotateCcw, Lock, Unlock, Calendar, Copy } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface Note {
@@ -12,6 +11,7 @@ interface Note {
   isLocked: boolean;
   isDeleted: boolean;
   updatedAt: string;
+  createdAt?: string;
 }
 
 interface NoteCardProps {
@@ -21,11 +21,33 @@ interface NoteCardProps {
   onLockToggle?: (id: string, currentVal: boolean) => void;
   onDeleteToggle?: (id: string, currentVal: boolean) => void;
   onDeletePermanent?: (id: string) => void;
+  onDuplicate?: (id: string) => void;
   view: "all" | "vault" | "bin";
 }
 
+function IconBtn({
+  label, onClick, className, children,
+}: {
+  label: string;
+  onClick: () => void;
+  className: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      onClick={(e) => { e.stopPropagation(); onClick(); }}
+      onTouchEnd={(e) => e.stopPropagation()}
+      className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors duration-150 ${className}`}
+    >
+      {children}
+    </button>
+  );
+}
+
 export default function NoteCard({
-  note, onEdit, onPinToggle, onLockToggle, onDeleteToggle, onDeletePermanent, view,
+  note, onEdit, onPinToggle, onLockToggle, onDeleteToggle, onDeletePermanent, onDuplicate, view,
 }: NoteCardProps) {
   const formattedDate = new Date(note.updatedAt).toLocaleDateString(undefined, {
     month: "short", day: "numeric", year: "numeric",
@@ -36,7 +58,7 @@ export default function NoteCard({
   const fullTimestamp = `${formattedDate} • ${formattedTime}`;
 
   const contentPreview = note.content
-    ? note.content.length > 120 ? note.content.slice(0, 120) + "..." : note.content
+    ? note.content.length > 120 ? note.content.slice(0, 120) + "…" : note.content
     : "No additional text";
 
   return (
@@ -63,28 +85,24 @@ export default function NoteCard({
             <h4 className="font-bold text-white text-base line-clamp-1 flex-1">
               {note.title || "Untitled Note"}
             </h4>
-            <div
-              className="flex items-center gap-1 shrink-0"
-              onClick={(e) => e.stopPropagation()}
-              onTouchEnd={(e) => e.stopPropagation()}
-            >
+            <div className="flex items-center gap-0.5 shrink-0">
               {view === "all" && onPinToggle && (
-                <Button isIconOnly size="sm" variant="light"
-                  aria-label={note.isPinned ? "Unpin" : "Pin"}
-                  className={note.isPinned ? "text-purple-400" : "text-white/30 hover:text-white"}
-                  onPress={() => onPinToggle(note.id, note.isPinned)}
+                <IconBtn
+                  label={note.isPinned ? "Unpin" : "Pin"}
+                  onClick={() => onPinToggle(note.id, note.isPinned)}
+                  className={note.isPinned ? "text-purple-400 bg-purple-500/10" : "text-white/20 hover:text-white hover:bg-white/5"}
                 >
-                  <Pin size={16} fill={note.isPinned ? "currentColor" : "none"} />
-                </Button>
+                  <Pin size={14} fill={note.isPinned ? "currentColor" : "none"} />
+                </IconBtn>
               )}
               {view !== "bin" && onLockToggle && (
-                <Button isIconOnly size="sm" variant="light"
-                  aria-label={note.isLocked ? "Remove from Vault" : "Move to Vault"}
-                  className={note.isLocked ? "text-amber-400" : "text-white/30 hover:text-amber-400"}
-                  onPress={() => onLockToggle(note.id, note.isLocked)}
+                <IconBtn
+                  label={note.isLocked ? "Remove from Vault" : "Move to Vault"}
+                  onClick={() => onLockToggle(note.id, note.isLocked)}
+                  className={note.isLocked ? "text-amber-400 bg-amber-500/10" : "text-white/20 hover:text-amber-400 hover:bg-amber-500/10"}
                 >
-                  {note.isLocked ? <Lock size={15} /> : <Unlock size={15} />}
-                </Button>
+                  {note.isLocked ? <Lock size={14} /> : <Unlock size={14} />}
+                </IconBtn>
               )}
             </div>
           </div>
@@ -96,7 +114,7 @@ export default function NoteCard({
 
           {/* Footer */}
           <div
-            className="flex justify-between items-center bg-black/10 border-t border-white/5 py-2.5 px-4"
+            className="flex justify-between items-center bg-black/10 border-t border-white/5 py-2 px-4"
             onClick={(e) => e.stopPropagation()}
             onTouchEnd={(e) => e.stopPropagation()}
           >
@@ -104,38 +122,50 @@ export default function NoteCard({
               <Calendar size={11} className="text-white/30 transition-colors duration-300 group-hover:text-purple-400" />
               <span>{fullTimestamp}</span>
             </div>
-            <div className="flex items-center gap-1">
+
+            <div className="flex items-center gap-0.5">
               {view === "bin" ? (
                 <>
                   {onDeleteToggle && (
-                    <Button isIconOnly size="sm" variant="light"
-                      aria-label="Recover note"
-                      className="text-white/40 hover:text-purple-300 hover:bg-purple-500/10 rounded-lg"
-                      onPress={() => onDeleteToggle(note.id, note.isDeleted)}
+                    <IconBtn
+                      label="Recover note"
+                      onClick={() => onDeleteToggle(note.id, note.isDeleted)}
+                      className="text-white/30 hover:text-purple-300 hover:bg-purple-500/10"
                     >
-                      <RotateCcw size={14} />
-                    </Button>
+                      <RotateCcw size={13} />
+                    </IconBtn>
                   )}
                   {onDeletePermanent && (
-                    <Button isIconOnly size="sm" variant="light"
-                      aria-label="Delete permanently"
-                      className="text-white/40 hover:text-red-400 hover:bg-red-500/10 rounded-lg"
-                      onPress={() => onDeletePermanent(note.id)}
+                    <IconBtn
+                      label="Delete permanently"
+                      onClick={() => onDeletePermanent(note.id)}
+                      className="text-white/30 hover:text-red-400 hover:bg-red-500/10"
                     >
-                      <Trash2 size={14} />
-                    </Button>
+                      <Trash2 size={13} />
+                    </IconBtn>
                   )}
                 </>
               ) : (
-                onDeleteToggle && (
-                  <Button isIconOnly size="sm" variant="light"
-                    aria-label="Move to recycle bin"
-                    className="text-white/30 hover:text-red-400 hover:bg-red-500/10 rounded-lg"
-                    onPress={() => onDeleteToggle(note.id, note.isDeleted)}
-                  >
-                    <Trash2 size={14} />
-                  </Button>
-                )
+                <>
+                  {onDuplicate && !note.isLocked && (
+                    <IconBtn
+                      label="Duplicate note"
+                      onClick={() => onDuplicate(note.id)}
+                      className="text-white/20 hover:text-blue-400 hover:bg-blue-500/10"
+                    >
+                      <Copy size={13} />
+                    </IconBtn>
+                  )}
+                  {onDeleteToggle && (
+                    <IconBtn
+                      label="Move to recycle bin"
+                      onClick={() => onDeleteToggle(note.id, note.isDeleted)}
+                      className="text-white/20 hover:text-red-400 hover:bg-red-500/10"
+                    >
+                      <Trash2 size={13} />
+                    </IconBtn>
+                  )}
+                </>
               )}
             </div>
           </div>

@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSession, signOut } from "next-auth/react";
-import { Input, Spinner, Button } from "@nextui-org/react";
-import { Search, FileText, Trash2, Lock, Trash, Plus, LockKeyhole } from "lucide-react";
+import { Input, Spinner } from "@nextui-org/react";
+import { Search, FileText, Trash2, Lock, Trash, Plus, LockKeyhole, ArrowUpDown, Download } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import Sidebar from "@/frontend/components/layout/Sidebar";
 import NoteCard from "@/frontend/components/notes/NoteCard";
@@ -15,6 +15,8 @@ import ConfirmationModal from "@/frontend/components/ui/ConfirmationModal";
 import Toast, { useToast } from "@/frontend/components/ui/Toast";
 import { encryptNote, decryptNote } from "@/frontend/lib/crypto";
 
+type SortOption = "updated" | "created" | "title";
+
 interface Note {
   id: string;
   title: string;
@@ -24,6 +26,7 @@ interface Note {
   isLocked: boolean;
   isDeleted: boolean;
   updatedAt: string;
+  createdAt?: string;
 }
 
 export default function Dashboard() {
@@ -202,6 +205,7 @@ export default function Dashboard() {
       fetchNotes();
     } catch (err) {
       console.error("Failed to save note:", err);
+      addToast("error", "Failed to save note. Please try again.");
     } finally {
       setIsSaving(false);
     }
@@ -217,6 +221,7 @@ export default function Dashboard() {
       fetchNotes();
     } catch (err) {
       console.error("Pin toggle failed:", err);
+      addToast("error", "Failed to update note");
     }
   };
 
@@ -394,6 +399,63 @@ export default function Dashboard() {
     if (currentView === "vault") setCurrentView("all");
   };
 
+  // Vault auto-lock after 10 minutes of inactivity
+  const inactivityTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const INACTIVITY_MS = 10 * 60 * 1000;
+
+  const resetInactivityTimer = useCallback(() => {
+    if (!vaultUnlocked) return;
+    if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
+    inactivityTimerRef.current = setTimeout(() => {
+      setVaultUnlocked(false);
+      setVaultPasswordSync(null);
+      if (currentView === "vault") setCurrentView("all");
+      addToast("vault", "Vault locked due to inactivity");
+    }, INACTIVITY_MS);
+  }, [vaultUnlocked, currentView]);
+
+  useEffect(() => {
+    if (!vaultUnlocked) return;
+    const events = ["mousemove", "keydown", "touchstart", "click"];
+    events.forEach((e) => window.addEventListener(e, resetInactivityTimer, { passive: true }));
+    resetInactivityTimer();
+    return () => {
+      events.forEach((e) => window.removeEventListener(e, resetInactivityTimer));
+      if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
+    };
+  }, [vaultUnlocked, resetInactivityTimer]);
+
+  // Duplicate note
+  const handleDuplicate = async (id: string) => {
+    try {
+      const res = await fetch(`/api/notes/${id}/duplicate`, { method: "POST" });
+      if (res.ok) {
+        addToast("duplicate", "Note duplicated");
+        fetchNotes();
+      } else {
+        const data = await res.json();
+        addToast("error", data.error || "Failed to duplicate note");
+      }
+    } catch {
+      addToast("error", "Failed to duplicate note");
+    }
+  };
+
+  // Export all visible notes as JSON
+  const handleExport = () => {
+    const exportable = notes.map(({ id, title, content, isPinned, updatedAt, createdAt }) => ({
+      id, title, content, isPinned, updatedAt, createdAt,
+    }));
+    const blob = new Blob([JSON.stringify(exportable, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `next-notes-export-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    addToast("success", `Exported ${exportable.length} notes`);
+  };
+
   const handleNewNote = () => {
     setEditingNote(null);
     setEditorOpen(true);
@@ -417,8 +479,23 @@ export default function Dashboard() {
     bin:   { title: "Recycle Bin",  icon: Trash2,   iconColor: "text-red-400",   emptyText: "Recycle bin is empty." },
   };
 
+  // Sort notes client-side
+  const sortedNotes = [...notes].sort((a, b) => {
+    if (sortOption === "title") return (a.title || "").localeCompare(b.title || "");
+    if (sortOption === "created") return new Date(b.createdAt || b.updatedAt).getTime() - new Date(a.createdAt || a.updatedAt).getTime();
+    return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+  });
+
+  const pinnedNotes = sortedNotes.filter((n) => n.isPinned);
+  const unpinnedNotes = sortedNotes.filter((n) => !n.isPinned);
+  const hasPinnedDivider = pinnedNotes.length > 0 && unpinnedNotes.length > 0 && currentView !== "bin";
+
   const ViewIcon = viewConfig[currentView].icon;
+
+  // All state must be declared before return
   const [lockVaultConfirm, setLockVaultConfirm] = useState(false);
+  const [sortOption, setSortOption] = useState<SortOption>("updated");
+  const [showSortMenu, setShowSortMenu] = useState(false);
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen">
@@ -459,31 +536,77 @@ export default function Dashboard() {
                 </button>
               )}
               {currentView === "bin" && !loading && notes.length > 0 && (
-                <Button
-                  size="sm"
-                  variant="flat"
-                  color="danger"
-                  startContent={<Trash size={14} />}
-                  className="ml-2 text-xs font-semibold text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20"
-                  onPress={handleEmptyBin}
+                <button
+                  onClick={handleEmptyBin}
+                  className="group relative overflow-hidden ml-2 flex items-center gap-1.5 px-3 h-7 rounded-lg text-xs font-semibold text-red-400 bg-red-500/10 border border-red-500/20 transition-all duration-200 hover:bg-red-500/20 hover:border-red-500/40"
                 >
-                  Empty Bin
-                </Button>
+                  <div className="absolute inset-0 pointer-events-none z-0">
+                    <div className="absolute -inset-full top-0 block w-1/2 h-full bg-gradient-to-r from-transparent via-red-400/[0.15] to-transparent skew-x-12 transform -translate-x-full transition-transform duration-700 ease-out group-hover:translate-x-[400%]" />
+                  </div>
+                  <Trash size={13} className="relative z-10" />
+                  <span className="relative z-10">Empty Bin</span>
+                </button>
               )}
             </div>
 
-            <div className="w-full sm:w-72">
-              <Input
-                placeholder="Search notes..."
-                variant="flat"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                startContent={<Search size={16} className="text-white/30" />}
-                classNames={{
-                  inputWrapper: "glass-input h-10",
-                  input: "text-white text-sm placeholder:text-white/30",
-                }}
-              />
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              {/* Sort menu */}
+              {currentView !== "bin" && (
+                <div className="relative">
+                  <button
+                    onClick={() => setShowSortMenu((v) => !v)}
+                    className="flex items-center gap-1.5 px-3 h-10 rounded-xl text-xs font-medium text-white/50 bg-white/5 border border-white/10 hover:text-white hover:bg-white/10 transition-all duration-200 shrink-0"
+                  >
+                    <ArrowUpDown size={13} />
+                    <span className="hidden sm:inline">
+                      {sortOption === "updated" ? "Last edited" : sortOption === "created" ? "Created" : "Title"}
+                    </span>
+                  </button>
+                  {showSortMenu && (
+                    <>
+                      <div className="fixed inset-0 z-10" onClick={() => setShowSortMenu(false)} />
+                      <div className="absolute right-0 top-12 z-20 glass-panel border border-white/10 rounded-xl p-1 min-w-[140px] shadow-xl">
+                        {(["updated", "created", "title"] as SortOption[]).map((opt) => (
+                          <button
+                            key={opt}
+                            onClick={() => { setSortOption(opt); setShowSortMenu(false); }}
+                            className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+                              sortOption === opt ? "text-purple-300 bg-purple-500/10" : "text-white/60 hover:text-white hover:bg-white/5"
+                            }`}
+                          >
+                            {opt === "updated" ? "Last edited" : opt === "created" ? "Date created" : "Title A–Z"}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+
+              {/* Export button — only on all notes view */}
+              {currentView === "all" && notes.length > 0 && (
+                <button
+                  onClick={handleExport}
+                  title="Export notes as JSON"
+                  className="flex items-center justify-center w-10 h-10 rounded-xl text-white/40 bg-white/5 border border-white/10 hover:text-white hover:bg-white/10 transition-all duration-200 shrink-0"
+                >
+                  <Download size={15} />
+                </button>
+              )}
+
+              <div className="w-full sm:w-72">
+                <Input
+                  placeholder="Search notes..."
+                  variant="flat"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  startContent={<Search size={16} className="text-white/30" />}
+                  classNames={{
+                    inputWrapper: "glass-input h-10",
+                    input: "text-white text-sm placeholder:text-white/30",
+                  }}
+                />
+              </div>
             </div>
           </div>
         </header>
@@ -522,39 +645,56 @@ export default function Dashboard() {
                     {viewConfig[currentView].emptyText}
                   </p>
                   {(currentView === "all" || currentView === "vault") && (
-                    <Button
-                      color="primary"
-                      className="md:hidden font-semibold shadow-lg shadow-purple-500/20 bg-primary"
-                      startContent={<Plus size={18} />}
-                      onPress={handleNewNote}
+                    <button
+                      onClick={handleNewNote}
+                      className="md:hidden btn-sheen flex items-center gap-2 px-5 h-10 rounded-xl bg-primary text-white text-sm font-semibold shadow-lg shadow-purple-500/20"
                     >
+                      <Plus size={16} />
                       {currentView === "vault" ? "Add to Vault" : "Create Note"}
-                    </Button>
+                    </button>
                   )}
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                <div className="space-y-6">
                   <AnimatePresence mode="popLayout">
-                    {notes.map((note) => (
-                      <motion.div
-                        key={note.id}
-                        layout
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.95 }}
-                        transition={{ duration: 0.2 }}
-                      >
-                        <NoteCard
-                          note={note}
-                          view={currentView}
-                          onEdit={handleEditNote}
-                          onPinToggle={handlePinToggle}
-                          onLockToggle={handleLockToggle}
-                          onDeleteToggle={handleDeleteToggle}
-                          onDeletePermanent={handleDeletePermanent}
-                        />
-                      </motion.div>
-                    ))}
+                    {/* Pinned section */}
+                    {hasPinnedDivider && (
+                      <div key="pinned-section">
+                        <p className="text-[11px] font-semibold text-white/30 uppercase tracking-widest mb-3 px-1">Pinned</p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                          {pinnedNotes.map((note) => (
+                            <motion.div key={note.id} layout initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.2 }}>
+                              <NoteCard note={note} view={currentView} onEdit={handleEditNote} onPinToggle={handlePinToggle} onLockToggle={handleLockToggle} onDeleteToggle={handleDeleteToggle} onDeletePermanent={handleDeletePermanent} onDuplicate={handleDuplicate} />
+                            </motion.div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Others / all notes */}
+                    {hasPinnedDivider && (
+                      <div key="others-section">
+                        <p className="text-[11px] font-semibold text-white/30 uppercase tracking-widest mb-3 px-1">Others</p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                          {unpinnedNotes.map((note) => (
+                            <motion.div key={note.id} layout initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.2 }}>
+                              <NoteCard note={note} view={currentView} onEdit={handleEditNote} onPinToggle={handlePinToggle} onLockToggle={handleLockToggle} onDeleteToggle={handleDeleteToggle} onDeletePermanent={handleDeletePermanent} onDuplicate={handleDuplicate} />
+                            </motion.div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* No pinned divider — flat grid */}
+                    {!hasPinnedDivider && (
+                      <div key="flat-grid" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                        {sortedNotes.map((note) => (
+                          <motion.div key={note.id} layout initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.2 }}>
+                            <NoteCard note={note} view={currentView} onEdit={handleEditNote} onPinToggle={handlePinToggle} onLockToggle={handleLockToggle} onDeleteToggle={handleDeleteToggle} onDeletePermanent={handleDeletePermanent} onDuplicate={handleDuplicate} />
+                          </motion.div>
+                        ))}
+                      </div>
+                    )}
                   </AnimatePresence>
                 </div>
               )}
