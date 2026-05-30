@@ -35,9 +35,33 @@ export default function Sidebar({
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
 
   const navItems = [
-    { id: "all", label: "All Notes", icon: Folder },
-    { id: "vault", label: "Secret Vault", icon: Lock },
-    { id: "bin", label: "Recycle Bin", icon: Trash2 },
+    {
+      id: "all",
+      label: "All Notes",
+      icon: Folder,
+      activeClass: "bg-blue-500/20 text-blue-300 border-blue-500/20 shadow-blue-500/5",
+      hoverClass: "hover:bg-blue-500/10 hover:text-blue-200 hover:border-blue-500/10",
+      iconActive: "text-blue-400",
+      sheenColor: "via-blue-400/[0.10]",
+    },
+    {
+      id: "vault",
+      label: "Secret Vault",
+      icon: Lock,
+      activeClass: "bg-amber-500/20 text-amber-300 border-amber-500/20 shadow-amber-500/5",
+      hoverClass: "hover:bg-amber-500/10 hover:text-amber-200 hover:border-amber-500/10",
+      iconActive: "text-amber-400",
+      sheenColor: "via-amber-400/[0.10]",
+    },
+    {
+      id: "bin",
+      label: "Recycle Bin",
+      icon: Trash2,
+      activeClass: "bg-red-500/20 text-red-300 border-red-500/20 shadow-red-500/5",
+      hoverClass: "hover:bg-red-500/10 hover:text-red-200 hover:border-red-500/10",
+      iconActive: "text-red-400",
+      sheenColor: "via-red-400/[0.10]",
+    },
   ] as const;
 
   const handleNavClick = (view: "all" | "vault" | "bin") => {
@@ -99,17 +123,17 @@ export default function Sidebar({
               <button
                 key={item.id}
                 onClick={() => handleNavClick(item.id)}
-                className={`w-full group relative overflow-hidden flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+                className={`w-full group relative overflow-hidden flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 border ${
                   isActive
-                    ? "bg-primary/20 text-purple-300 border border-primary/20 shadow-lg shadow-purple-500/5"
-                    : "text-white/60 hover:text-white hover:bg-white/5 border border-transparent"
+                    ? `${item.activeClass} shadow-lg`
+                    : `text-white/60 border-transparent ${item.hoverClass}`
                 }`}
               >
                 <div className="absolute inset-0 pointer-events-none z-0">
-                  <div className="absolute -inset-full top-0 block w-1/2 h-full bg-gradient-to-r from-transparent via-white/[0.08] to-transparent skew-x-12 transform -translate-x-full transition-transform duration-1000 ease-out group-hover:translate-x-[400%]" />
+                  <div className={`absolute -inset-full top-0 block w-1/2 h-full bg-gradient-to-r from-transparent ${item.sheenColor} to-transparent skew-x-12 transform -translate-x-full transition-transform duration-1000 ease-out group-hover:translate-x-[400%]`} />
                 </div>
                 <div className="relative z-10 flex items-center gap-3 w-full">
-                  <Icon size={18} className={isActive ? "text-purple-400" : ""} />
+                  <Icon size={18} className={isActive ? item.iconActive : ""} />
                   {!isCollapsed && <span>{item.label}</span>}
                 </div>
               </button>
