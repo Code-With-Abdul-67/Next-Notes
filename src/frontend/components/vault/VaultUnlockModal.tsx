@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Modal, ModalContent, ModalHeader, ModalBody, Button, Input } from "@nextui-org/react";
+import { Modal, ModalContent, ModalHeader, ModalBody, Input } from "@nextui-org/react";
 import { Lock, Loader2, ArrowRight } from "lucide-react";
 
 interface VaultUnlockModalProps {
@@ -88,15 +88,14 @@ export default function VaultUnlockModal({ isOpen, onClose, onUnlock }: VaultUnl
                     {error}
                   </p>
                 )}
-                <Button
+                <button
                   type="submit"
-                  color="primary"
-                  className="w-full font-semibold bg-primary shadow-lg shadow-purple-500/10"
-                  endContent={loading ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
-                  isDisabled={loading}
+                  disabled={loading}
+                  className="btn-sheen w-full h-10 rounded-xl bg-primary text-white font-semibold shadow-lg shadow-purple-500/20 flex items-center justify-center gap-2 transition-all duration-200 hover:brightness-110 hover:shadow-purple-500/40 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
+                  {loading ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
                   Unlock & Move to Vault
-                </Button>
+                </button>
               </form>
             </ModalBody>
           </>

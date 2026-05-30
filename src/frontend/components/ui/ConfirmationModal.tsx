@@ -1,6 +1,6 @@
 "use client";
 
-import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button } from "@nextui-org/react";
+import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from "@nextui-org/react";
 import { AlertTriangle, Info } from "lucide-react";
 
 interface ConfirmationModalProps {
@@ -52,24 +52,23 @@ export default function ConfirmationModal({
             <ModalBody className="py-6">
               <p className="text-white/70 text-sm">{message}</p>
             </ModalBody>
-            <ModalFooter>
-              <Button
-                variant="light"
-                className="text-white/60 hover:text-white hover:bg-white/5"
-                onPress={onClose}
+            <ModalFooter className="gap-2">
+              <button
+                onClick={onClose}
+                className="btn-sheen px-4 h-9 rounded-xl text-sm font-medium text-white/60 bg-white/5 border border-white/10 hover:text-white hover:bg-white/10 transition-all duration-200"
               >
                 No, Cancel
-              </Button>
-              <Button
-                color={isDestructive ? "danger" : "primary"}
-                className="font-semibold shadow-lg"
-                onPress={() => {
-                  onConfirm();
-                  onClose();
-                }}
+              </button>
+              <button
+                onClick={() => { onConfirm(); onClose(); }}
+                className={`btn-sheen px-4 h-9 rounded-xl text-sm font-semibold text-white transition-all duration-200 shadow-lg ${
+                  isDestructive
+                    ? "bg-red-600 hover:bg-red-500 shadow-red-500/20 hover:shadow-red-500/40"
+                    : "bg-primary hover:brightness-110 shadow-purple-500/20 hover:shadow-purple-500/40"
+                }`}
               >
                 Yes, {confirmText}
-              </Button>
+              </button>
             </ModalFooter>
           </>
         )}

@@ -87,7 +87,26 @@ body {
   background: rgba(139, 92, 246, 0.3);
 }
 
-/* Dynamic Gradients */
+/* Reusable sheen slide animation for buttons */
+.btn-sheen {
+  position: relative;
+  overflow: hidden;
+}
+.btn-sheen::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+  transform: skewX(-12deg);
+  transition: left 0.7s ease-out;
+  pointer-events: none;
+}
+.btn-sheen:hover::after {
+  left: 200%;
+}
 .text-gradient-purple {
   background: linear-gradient(135deg, #C084FC 0%, #8B5CF6 50%, #6D28D9 100%);
   -webkit-background-clip: text;

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
-import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, Input, Textarea } from "@nextui-org/react";
+import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Input, Textarea } from "@nextui-org/react";
 import { Pin, Lock, Unlock, Loader2, Save } from "lucide-react";
 
 interface Note {
@@ -101,22 +101,26 @@ export default function NoteEditorModal({
                 {note ? "Edit Note" : "Create Note"}
               </span>
               <div className="flex items-center gap-2 mr-6">
-                <Button
-                  isIconOnly size="sm" variant="light"
+                <button
+                  type="button"
                   aria-label={isPinned ? "Unpin Note" : "Pin Note"}
-                  className={isPinned ? "text-purple-400" : "text-white/30 hover:text-white"}
-                  onPress={() => setIsPinned(!isPinned)}
+                  onClick={() => setIsPinned(!isPinned)}
+                  className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors duration-200 ${
+                    isPinned ? "text-purple-400 bg-purple-500/10" : "text-white/30 hover:text-white hover:bg-white/5"
+                  }`}
                 >
                   <Pin size={16} fill={isPinned ? "currentColor" : "none"} />
-                </Button>
-                <Button
-                  isIconOnly size="sm" variant="light"
+                </button>
+                <button
+                  type="button"
                   aria-label={isLocked ? "Unlock Note" : "Lock Note"}
-                  className={isLocked ? "text-amber-400" : "text-white/30 hover:text-amber-400"}
-                  onPress={() => setIsLocked(!isLocked)}
+                  onClick={() => setIsLocked(!isLocked)}
+                  className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors duration-200 ${
+                    isLocked ? "text-amber-400 bg-amber-500/10" : "text-white/30 hover:text-amber-400 hover:bg-amber-500/10"
+                  }`}
                 >
                   {isLocked ? <Lock size={15} /> : <Unlock size={15} />}
-                </Button>
+                </button>
               </div>
             </ModalHeader>
 
@@ -169,22 +173,22 @@ export default function NoteEditorModal({
                 )}
               </span>
               <div className="flex gap-2">
-                <Button
-                  variant="light"
-                  className="text-white/60 hover:text-white hover:bg-white/5 font-semibold"
-                  onPress={onClose}
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="btn-sheen px-4 h-9 rounded-xl text-sm font-semibold text-white/60 bg-white/5 border border-white/10 hover:text-white hover:bg-white/10 transition-all duration-200"
                 >
                   Cancel
-                </Button>
-                <Button
-                  color="primary"
-                  className="font-semibold shadow-lg shadow-purple-500/10 bg-primary"
-                  onPress={handleSave}
-                  startContent={isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-                  isDisabled={isSaving}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSave}
+                  disabled={isSaving}
+                  className="btn-sheen px-4 h-9 rounded-xl text-sm font-semibold text-white bg-primary shadow-lg shadow-purple-500/20 hover:brightness-110 hover:shadow-purple-500/40 transition-all duration-200 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
+                  {isSaving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
                   Save Note
-                </Button>
+                </button>
               </div>
             </ModalFooter>
           </>

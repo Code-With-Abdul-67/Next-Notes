@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Lock, KeyRound, Loader2, ArrowRight } from "lucide-react";
-import { Button, Input, Card, CardBody, CardHeader } from "@nextui-org/react";
+import { Input, Card, CardBody, CardHeader } from "@nextui-org/react";
 import VaultReset from "./VaultReset";
 
 interface VaultLockProps {
@@ -137,15 +137,14 @@ export default function VaultLock({ onUnlock, hasVaultPassword, onPasswordSet }:
                 {error}
               </p>
             )}
-            <Button
+            <button
               type="submit"
-              color="primary"
-              className="w-full font-semibold shadow-lg shadow-purple-500/10 bg-primary"
-              endContent={loading ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
-              isDisabled={loading}
+              disabled={loading}
+              className="btn-sheen w-full h-10 rounded-xl bg-primary text-white font-semibold shadow-lg shadow-purple-500/20 flex items-center justify-center gap-2 transition-all duration-200 hover:brightness-110 hover:shadow-purple-500/40 disabled:opacity-50 disabled:cursor-not-allowed"
             >
+              {loading ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
               {isSetupMode ? "Create Vault" : "Unlock Vault"}
-            </Button>
+            </button>
           </form>
 
           {!isSetupMode && (
