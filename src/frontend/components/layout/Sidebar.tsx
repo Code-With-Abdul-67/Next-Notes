@@ -139,18 +139,9 @@ export default function Sidebar({
                 <div className="absolute inset-0 pointer-events-none z-0">
                   <div className={`absolute -inset-full top-0 block w-1/2 h-full bg-gradient-to-r from-transparent ${item.sheenColor} to-transparent skew-x-12 transform -translate-x-full transition-transform duration-1000 ease-out group-hover:translate-x-[400%]`} />
                 </div>
-                <div className="relative z-10 flex items-center justify-between w-full">
-                  <div className="flex items-center gap-3">
-                    <Icon size={18} className={isActive ? item.iconActive : ""} />
-                    {!isCollapsed && <span>{item.label}</span>}
-                  </div>
-                  {!isCollapsed && noteCounts && noteCounts[item.id] > 0 && (
-                    <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
-                      isActive ? "bg-white/20 text-white/80" : "bg-white/5 text-white/30"
-                    }`}>
-                      {noteCounts[item.id]}
-                    </span>
-                  )}
+                <div className="relative z-10 flex items-center gap-3 w-full">
+                  <Icon size={18} className={isActive ? item.iconActive : ""} />
+                  {!isCollapsed && <span>{item.label}</span>}
                 </div>
               </button>
             );
