@@ -112,6 +112,14 @@ export default function VaultReset({ onCancel, onResetSuccess }: VaultResetProps
               ? "A 6-digit code was sent to your registered email. It expires in 5 minutes."
               : "Enter and confirm your new vault master password."}
           </p>
+          {step === "password" && (
+            <div className="flex items-start gap-2 bg-red-500/10 border border-red-500/20 rounded-xl px-3 py-2.5 text-left mt-1">
+              <span className="text-red-400 text-base leading-none mt-0.5">⚠️</span>
+              <p className="text-xs text-red-300/80 leading-relaxed">
+                <strong className="text-red-300">All vault notes will be permanently deleted.</strong> Because notes are encrypted with your old password, they cannot be recovered after a reset. This cannot be undone.
+              </p>
+            </div>
+          )}
         </CardHeader>
 
         <CardBody className="py-4">

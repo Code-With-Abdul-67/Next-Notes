@@ -32,9 +32,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Incorrect verification code" }, { status: 400 });
     }
 
-    // Check expiration (60s limit)
+    // Check expiration (5 minute limit)
     if (new Date() > verificationRecord.expiresAt) {
-      return NextResponse.json({ error: "Verification code has expired (60s limit)" }, { status: 400 });
+      return NextResponse.json({ error: "Verification code has expired. Please request a new one." }, { status: 400 });
     }
 
     // Password reset is authorized
