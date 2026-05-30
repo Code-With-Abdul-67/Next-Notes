@@ -113,10 +113,10 @@ export default function VaultReset({ onCancel, onResetSuccess }: VaultResetProps
               : "Enter and confirm your new vault master password."}
           </p>
           {step === "password" && (
-            <div className="flex items-start gap-2 bg-red-500/10 border border-red-500/20 rounded-xl px-3 py-2.5 text-left mt-1">
-              <span className="text-red-400 text-base leading-none mt-0.5">⚠️</span>
-              <p className="text-xs text-red-300/80 leading-relaxed">
-                <strong className="text-red-300">All vault notes will be permanently deleted.</strong> Because notes are encrypted with your old password, they cannot be recovered after a reset. This cannot be undone.
+            <div className="flex items-start gap-2 bg-amber-500/10 border border-amber-500/20 rounded-xl px-3 py-2.5 text-left mt-1">
+              <span className="text-amber-400 text-base leading-none mt-0.5">⚠️</span>
+              <p className="text-xs text-amber-300/80 leading-relaxed">
+                <strong className="text-amber-300">All vault notes will be permanently deleted.</strong> Because notes are encrypted with your old password, they cannot be recovered after a reset. This cannot be undone.
               </p>
             </div>
           )}
