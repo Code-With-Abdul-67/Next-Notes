@@ -173,15 +173,14 @@ export default function Sidebar({
               key="logout"
               startContent={<LogOut size={16} />}
               onPress={() => setLogoutConfirmOpen(true)}
-              className="text-white/80 hover:text-white"
+              className="text-white/70 font-medium data-[hover=true]:bg-white/10 data-[hover=true]:text-white"
             >
               Logout
             </DropdownItem>
 
             <DropdownItem
               key="delete-vault"
-              className={hasVaultPassword ? "text-warning font-medium" : "hidden"}
-              color="warning"
+              className={hasVaultPassword ? "text-amber-400 font-medium data-[hover=true]:bg-amber-500/15 data-[hover=true]:text-amber-300" : "hidden"}
               startContent={<AlertTriangle size={16} />}
               onPress={onDeleteVault}
             >
@@ -190,8 +189,7 @@ export default function Sidebar({
 
             <DropdownItem
               key="delete-account"
-              className="text-danger font-medium"
-              color="danger"
+              className="text-red-400 font-medium data-[hover=true]:bg-red-500/15 data-[hover=true]:text-red-300"
               startContent={<UserX size={16} />}
               onPress={onDeleteAccount}
             >
