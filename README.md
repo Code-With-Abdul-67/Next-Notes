@@ -1,4 +1,5 @@
-📝 NEXT Notes
+**📝 NEXT Notes**
+
 NEXT Notes is a high-performance, full-stack notes application designed to help you capture, organize, and secure your thoughts seamlessly. With an intuitive, animated interface and powerful backend architecture, it provides a modern note-taking experience with advanced AI integrations and strict privacy controls.
 
 🚀 Tech Stack
