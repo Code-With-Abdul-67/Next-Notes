@@ -1,4 +1,8 @@
-const CACHE_NAME = "next-notes-v3";
+// ─── NEXT NOTES SERVICE WORKER ───────────────────────────────────────────────
+// Bump this version string on every deployment so the browser detects a new SW.
+// The page will show an "Update available" card and only activate after the user
+// clicks "Update" — no silent forced reloads.
+const CACHE_VERSION = "next-notes-v4";
 const STATIC_ASSETS = [
   "/",
   "/favicon.ico",
@@ -6,29 +10,49 @@ const STATIC_ASSETS = [
   "/manifest.webmanifest",
 ];
 
-// Install: pre-cache static shell
+// ── Install ───────────────────────────────────────────────────────────────────
+// Pre-cache the app shell. Do NOT call skipWaiting() here — we wait for the
+// page to send a SKIP_WAITING message after the user confirms the update.
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
+    caches.open(CACHE_VERSION).then((cache) => cache.addAll(STATIC_ASSETS))
   );
-  self.skipWaiting();
+  // Intentionally NOT calling self.skipWaiting() here.
+  // The new SW sits in "waiting" state until the user clicks "Update".
 });
 
-// Activate: remove old caches
+// ── Activate ──────────────────────────────────────────────────────────────────
+// Clean up old caches from previous versions.
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
-    )
+    caches
+      .keys()
+      .then((keys) =>
+        Promise.all(
+          keys
+            .filter((k) => k !== CACHE_VERSION)
+            .map((k) => caches.delete(k))
+        )
+      )
+      .then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
+// ── Message handler ───────────────────────────────────────────────────────────
+// The UpdatePrompt component sends SKIP_WAITING when the user clicks "Update".
+// This activates the new SW immediately, then the page reloads to pick it up.
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
+});
+
+// ── Fetch ─────────────────────────────────────────────────────────────────────
 self.addEventListener("fetch", (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Never intercept API calls, Next.js internals, or auth routes
+  // Never intercept API calls, Next.js internals, auth routes, or extensions
   if (
     url.pathname.startsWith("/api/") ||
     url.pathname.startsWith("/_next/") ||
@@ -38,14 +62,13 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Navigation requests: network-first, fall back to cached shell
+  // Navigation (HTML pages): network-first, fall back to cached shell
   if (request.mode === "navigate") {
     event.respondWith(
       fetch(request)
         .then((res) => {
-          // Cache a fresh copy of the shell on each successful navigation
           const clone = res.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+          caches.open(CACHE_VERSION).then((cache) => cache.put(request, clone));
           return res;
         })
         .catch(() =>
@@ -55,7 +78,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Static assets (fonts, icons, images): cache-first
+  // Static assets: cache-first
   if (
     url.pathname.startsWith("/_next/static/") ||
     url.pathname.endsWith(".svg") ||
@@ -69,7 +92,7 @@ self.addEventListener("fetch", (event) => {
           cached ||
           fetch(request).then((res) => {
             const clone = res.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+            caches.open(CACHE_VERSION).then((cache) => cache.put(request, clone));
             return res;
           })
       )

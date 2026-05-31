@@ -6,18 +6,19 @@ import { Spinner } from "@nextui-org/react";
 import { motion } from "framer-motion";
 import Dashboard from "@/frontend/components/layout/Dashboard";
 import ErrorBoundary from "@/frontend/components/ui/ErrorBoundary";
+import UpdatePrompt from "@/frontend/components/layout/UpdatePrompt";
 import Image from 'next/image';
 
 
 export default function HomePage() {
   const { data: session, status } = useSession();
 
-  // Register service worker on mount
+  // Register SW silently for all users (enables offline caching).
+  // The UpdatePrompt component handles showing the update card,
+  // but only when running as an installed PWA on a mobile device.
   useEffect(() => {
     if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch((err) =>
-        console.error("Service worker registration failed:", err)
-      );
+      navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch(() => {});
     }
   }, []);
 
@@ -30,10 +31,20 @@ export default function HomePage() {
   }
 
   if (!session) {
-    return <LoginScreen />;
+    return (
+      <>
+        <LoginScreen />
+        <UpdatePrompt />
+      </>
+    );
   }
 
-  return <ErrorBoundary><Dashboard /></ErrorBoundary>;
+  return (
+    <>
+      <ErrorBoundary><Dashboard /></ErrorBoundary>
+      <UpdatePrompt />
+    </>
+  );
 }
 
 function LoginScreen() {
