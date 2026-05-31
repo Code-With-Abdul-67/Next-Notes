@@ -1,4 +1,4 @@
-# 📝 NEXT Notes
+<h3>📝 NEXT Notes</h3>
 
 A premium, secure, and beautifully designed note-taking workspace built with **Next.js 16**, **AES-256-GCM client-side encryption**, and a glassmorphism UI.
 
@@ -117,56 +117,10 @@ src/
         └── crypto.ts             # AES-256-GCM encrypt/decrypt utilities
 ```
 
----
-
-## ⚙️ Environment Variables
-
-Create a `.env` file in the root:
-
-```env
-# App
-NEXTAUTH_URL="https://your-domain.vercel.app"
-NEXTAUTH_SECRET="your-secret"
-
-# Database
-DATABASE_URL="postgresql://..."
-
-# Google OAuth
-GOOGLE_CLIENT_ID="..."
-GOOGLE_CLIENT_SECRET="..."
-
-# Email (Gmail SMTP — use an App Password)
-# Generate at: https://myaccount.google.com/apppasswords
-SMTP_EMAIL="your-email@gmail.com"
-SMTP_PASSWORD="xxxx xxxx xxxx xxxx"
-```
-
-> ⚠️ **Important:** Set `NEXTAUTH_URL` to your actual production URL in Vercel's environment variables, not `localhost`. A mismatch causes 401 session errors in production.
-
----
-
-## 🏃 Getting Started
-
-```bash
-# Install dependencies
-npm install
-
-# Push database schema
-npx prisma db push
-
-# Run development server
-npm run dev
-```
-
----
 
 ## 🐛 Known Behaviour
 
 - **Vault password reset deletes all vault notes** — this is intentional. Because encryption is client-side, the server cannot re-encrypt notes with the new password. This is the same behaviour as professional password managers.
 - **Vault search** — vault notes store empty strings in the database (encrypted data is in a separate field), so server-side search doesn't match vault notes.
 
----
 
-## 📄 License
-
-MIT
