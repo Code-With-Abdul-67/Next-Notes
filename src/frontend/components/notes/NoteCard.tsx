@@ -2,11 +2,16 @@
 
 import { Pin, Trash2, RotateCcw, Lock, Unlock, Calendar, Copy } from "lucide-react";
 import { motion } from "framer-motion";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+
+export type NoteColor = "red" | "orange" | "yellow" | "green" | "blue" | "purple" | "pink" | null;
 
 interface Note {
   id: string;
   title: string;
   content: string;
+  color?: NoteColor;
   isPinned: boolean;
   isLocked: boolean;
   isDeleted: boolean;
@@ -24,6 +29,17 @@ interface NoteCardProps {
   onDuplicate?: (id: string) => void;
   view: "all" | "vault" | "bin";
 }
+
+// Color accent map — border top + subtle background tint
+const COLOR_STYLES: Record<NonNullable<NoteColor>, { border: string; glow: string; dot: string }> = {
+  red:    { border: "border-t-red-500/60",    glow: "hover:shadow-red-500/10",    dot: "bg-red-400" },
+  orange: { border: "border-t-orange-500/60", glow: "hover:shadow-orange-500/10", dot: "bg-orange-400" },
+  yellow: { border: "border-t-yellow-400/60", glow: "hover:shadow-yellow-400/10", dot: "bg-yellow-400" },
+  green:  { border: "border-t-green-500/60",  glow: "hover:shadow-green-500/10",  dot: "bg-green-400" },
+  blue:   { border: "border-t-blue-500/60",   glow: "hover:shadow-blue-500/10",   dot: "bg-blue-400" },
+  purple: { border: "border-t-purple-500/60", glow: "hover:shadow-purple-500/10", dot: "bg-purple-400" },
+  pink:   { border: "border-t-pink-500/60",   glow: "hover:shadow-pink-500/10",   dot: "bg-pink-400" },
+};
 
 function IconBtn({
   label, onClick, className, children,
@@ -57,9 +73,24 @@ export default function NoteCard({
   });
   const fullTimestamp = `${formattedDate} • ${formattedTime}`;
 
-  const contentPreview = note.content
-    ? note.content.length > 120 ? note.content.slice(0, 120) + "…" : note.content
+  // Strip markdown syntax for plain-text preview
+  const plainPreview = note.content
+    ? note.content
+        .replace(/#{1,6}\s/g, "")
+        .replace(/\*\*(.+?)\*\*/g, "$1")
+        .replace(/\*(.+?)\*/g, "$1")
+        .replace(/`(.+?)`/g, "$1")
+        .replace(/\[(.+?)\]\(.+?\)/g, "$1")
+        .replace(/^[-*+]\s/gm, "")
+        .replace(/^\d+\.\s/gm, "")
+        .trim()
+    : "";
+
+  const contentPreview = plainPreview
+    ? plainPreview.length > 120 ? plainPreview.slice(0, 120) + "…" : plainPreview
     : "No additional text";
+
+  const colorStyle = note.color ? COLOR_STYLES[note.color] : null;
 
   return (
     <motion.div
@@ -72,7 +103,9 @@ export default function NoteCard({
     >
       <div
         onClick={() => view !== "bin" && onEdit(note)}
-        className="group relative overflow-hidden glass-card w-full h-48 flex flex-col justify-between rounded-xl border border-white/5 bg-white/5 backdrop-blur-md shadow-lg transition-all duration-300 cursor-pointer hover:bg-white/10 hover:border-white/20 hover:shadow-purple-500/5"
+        className={`group relative overflow-hidden glass-card w-full h-48 flex flex-col justify-between rounded-xl border border-white/5 bg-white/5 backdrop-blur-md shadow-lg transition-all duration-300 cursor-pointer hover:bg-white/10 hover:border-white/20 hover:shadow-purple-500/5 ${
+          colorStyle ? `border-t-2 ${colorStyle.border} ${colorStyle.glow}` : ""
+        }`}
       >
         {/* Sheen */}
         <div className="absolute inset-0 pointer-events-none z-0">
@@ -82,9 +115,14 @@ export default function NoteCard({
         <div className="relative z-10 flex flex-col justify-between h-full w-full">
           {/* Header */}
           <div className="flex justify-between items-start gap-2 pt-4 px-4 pb-2">
-            <h4 className="font-bold text-white text-base line-clamp-1 flex-1">
-              {note.title || "Untitled Note"}
-            </h4>
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              {colorStyle && (
+                <span className={`shrink-0 w-2 h-2 rounded-full ${colorStyle.dot}`} />
+              )}
+              <h4 className="font-bold text-white text-base line-clamp-1">
+                {note.title || "Untitled Note"}
+              </h4>
+            </div>
             <div className="flex items-center gap-0.5 shrink-0">
               {view === "all" && onPinToggle && (
                 <IconBtn
@@ -107,7 +145,7 @@ export default function NoteCard({
             </div>
           </div>
 
-          {/* Body */}
+          {/* Body — plain text preview (stripped markdown) */}
           <p className="text-white/60 text-xs leading-relaxed line-clamp-3 whitespace-pre-line px-4 py-1 flex-1">
             {contentPreview}
           </p>

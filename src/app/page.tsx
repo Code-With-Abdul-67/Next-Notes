@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import { Spinner } from "@nextui-org/react";
 import { motion } from "framer-motion";
 import Dashboard from "@/frontend/components/layout/Dashboard";
+import ErrorBoundary from "@/frontend/components/ui/ErrorBoundary";
 import Image from 'next/image';
 
 
@@ -32,7 +33,7 @@ export default function HomePage() {
     return <LoginScreen />;
   }
 
-  return <Dashboard />;
+  return <ErrorBoundary><Dashboard /></ErrorBoundary>;
 }
 
 function LoginScreen() {

@@ -5,6 +5,7 @@ import { prisma } from "@/backend/lib/prisma";
 
 const MAX_TITLE_LENGTH = 500;
 const MAX_CONTENT_LENGTH = 100_000;
+const VALID_COLORS = new Set(["red", "orange", "yellow", "green", "blue", "purple", "pink"]);
 
 export async function PUT(request: Request, context: any) {
   const session = await getServerSession(authOptions);
@@ -36,6 +37,9 @@ export async function PUT(request: Request, context: any) {
     const content = typeof body.content === "string"
       ? body.content.slice(0, MAX_CONTENT_LENGTH)
       : note.content;
+    const color = body.color !== undefined
+      ? (typeof body.color === "string" && VALID_COLORS.has(body.color) ? body.color : null)
+      : note.color;
 
     const updatedNote = await prisma.note.update({
       where: { id },
@@ -48,6 +52,7 @@ export async function PUT(request: Request, context: any) {
         isPinned: isPinned !== undefined ? isPinned === true : note.isPinned,
         isDeleted: isDeleted !== undefined ? isDeleted === true : note.isDeleted,
         isLocked: isLocked !== undefined ? isLocked === true : note.isLocked,
+        color,
       },
     });
 

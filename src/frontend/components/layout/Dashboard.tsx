@@ -3,10 +3,11 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { Input, Spinner } from "@nextui-org/react";
-import { Search, FileText, Trash2, Lock, Trash, Plus, LockKeyhole, ArrowUpDown, Download } from "lucide-react";
+import { Search, FileText, Trash2, Lock, Trash, Plus, LockKeyhole, ArrowUpDown, Download, Keyboard } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import Sidebar from "@/frontend/components/layout/Sidebar";
 import NoteCard from "@/frontend/components/notes/NoteCard";
+import type { NoteColor } from "@/frontend/components/notes/NoteCard";
 import NoteEditorModal from "@/frontend/components/notes/NoteEditorModal";
 import VaultLock from "@/frontend/components/vault/VaultLock";
 import VaultUnlockModal from "@/frontend/components/vault/VaultUnlockModal";
@@ -14,6 +15,7 @@ import InstallPrompt from "@/frontend/components/layout/InstallPrompt";
 import ConfirmationModal from "@/frontend/components/ui/ConfirmationModal";
 import Toast, { useToast } from "@/frontend/components/ui/Toast";
 import SessionGuard from "@/frontend/components/layout/SessionGuard";
+import ShortcutsModal from "@/frontend/components/ui/ShortcutsModal";
 import { encryptNote, decryptNote } from "@/frontend/lib/crypto";
 
 type SortOption = "updated" | "created" | "title";
@@ -22,6 +24,7 @@ interface Note {
   id: string;
   title: string;
   content: string;
+  color?: NoteColor;
   encryptedData?: string | null;
   isPinned: boolean;
   isLocked: boolean;
@@ -38,54 +41,51 @@ export default function Dashboard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
 
-  // Debounce search input to avoid excessive fetches
   useEffect(() => {
     const handler = setTimeout(() => setDebouncedQuery(searchQuery), 300);
     return () => clearTimeout(handler);
   }, [searchQuery]);
 
-  // Editor modal
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingNote, setEditingNote] = useState<Note | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
 
   // Vault
   const [vaultUnlocked, setVaultUnlocked] = useState(false);
   const [hasVaultPassword, setHasVaultPassword] = useState(false);
   const [vaultChecked, setVaultChecked] = useState(false);
-  // Vault password held in memory for the whole session — NOT cleared on view change
-  // Only the ref is used in async callbacks to avoid stale closures
   const vaultPasswordRef = useRef<string | null>(null);
-  // Inline unlock modal — shown when locking a note from "All Notes" without vault unlocked
   const [vaultUnlockModalOpen, setVaultUnlockModalOpen] = useState(false);
-  // Pending note to encrypt+lock after the inline unlock modal succeeds
   const pendingVaultLockRef = useRef<{ id: string; title: string; content: string } | null>(null);
 
-  // Always update both state (for re-renders) and ref (for async callbacks)
   const setVaultPasswordSync = (pwd: string | null) => {
     vaultPasswordRef.current = pwd;
   };
 
   const { toasts, addToast, removeToast } = useToast();
 
-  // Confirmation Modals
   const [confirmAction, setConfirmAction] = useState<{
     type: "vault" | "unlock" | "bin" | "delete" | "deleteVault" | "deleteAccount" | "emptyBin";
     id: string;
     currentVal?: boolean;
   } | null>(null);
 
-  // All UI state declared together — avoids temporal dead zone in production builds
   const [lockVaultConfirm, setLockVaultConfirm] = useState(false);
   const [sortOption, setSortOption] = useState<SortOption>("updated");
   const [showSortMenu, setShowSortMenu] = useState(false);
 
-  // Keyboard shortcut: Ctrl+N / Cmd+N → new note
+  // Keyboard shortcuts: Ctrl+N → new note, ? → shortcuts panel
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      const isTyping = tag === "INPUT" || tag === "TEXTAREA" || (e.target as HTMLElement)?.isContentEditable;
       if ((e.ctrlKey || e.metaKey) && e.key === "n") {
         e.preventDefault();
         handleNewNote();
+      }
+      if (e.key === "?" && !isTyping) {
+        setShortcutsOpen((v) => !v);
       }
     };
     window.addEventListener("keydown", handler);
@@ -93,26 +93,34 @@ export default function Dashboard() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Check if vault password exists — runs once per user login, not on every session refetch
   const userId = (session?.user as any)?.id as string | undefined;
 
   useEffect(() => {
+    if (!userId) return;
+    let cancelled = false;
     const checkVault = async () => {
       try {
         const res = await fetch("/api/vault/status");
-        // 401 means session not ready yet — don't mark as checked, retry on next userId change
-        if (res.status === 401) return;
+        if (res.status === 401) return; // session not ready — retry on next userId change
+        if (!res.ok) {
+          // Server error — mark checked with false so vault shows unlock (safer than setup)
+          if (!cancelled) { setHasVaultPassword(false); setVaultChecked(true); }
+          return;
+        }
         const data = await res.json();
-        setHasVaultPassword(data.hasVaultPassword === true);
+        if (!cancelled) {
+          setHasVaultPassword(data.hasVaultPassword === true);
+          setVaultChecked(true);
+        }
       } catch {
-        setHasVaultPassword(false);
+        // Network error — don't mark as checked, will retry if userId changes
+        if (!cancelled) { setHasVaultPassword(false); setVaultChecked(true); }
       }
-      setVaultChecked(true);
     };
-    if (userId) checkVault();
+    checkVault();
+    return () => { cancelled = true; };
   }, [userId]);
 
-  // Fetch notes based on current view
   const fetchNotes = useCallback(async () => {
     setLoading(true);
     try {
@@ -122,35 +130,36 @@ export default function Dashboard() {
       if (debouncedQuery) params.set("search", debouncedQuery);
 
       const res = await fetch(`/api/notes?${params.toString()}`);
-      if (res.ok) {
-        const data: Note[] = await res.json();
-
-        // Decrypt vault notes client-side using the in-memory vault password
-        if (currentView === "vault" && vaultPasswordRef.current) {
-          const decrypted = await Promise.all(
-            data.map(async (note) => {
-              if (note.isLocked && note.encryptedData) {
-                try {
-                  const { title, content } = await decryptNote(note.encryptedData, vaultPasswordRef.current!);
-                  return { ...note, title, content };
-                } catch {
-                  // Wrong password or corrupted data — show placeholder
-                  return { ...note, title: "⚠️ Decryption failed", content: "" };
-                }
-              }
-              return note;
-            })
-          );
-          setNotes(decrypted);
-        } else {
-          setNotes(data);
-        }
+      if (!res.ok) {
+        addToast("error", "Failed to load notes. Please refresh.");
+        return;
       }
-    } catch (err) {
-      console.error("Failed to fetch notes:", err);
+      const data: Note[] = await res.json();
+
+      if (currentView === "vault" && vaultPasswordRef.current) {
+        const decrypted = await Promise.all(
+          data.map(async (note) => {
+            if (note.isLocked && note.encryptedData) {
+              try {
+                const { title, content } = await decryptNote(note.encryptedData, vaultPasswordRef.current!);
+                return { ...note, title, content };
+              } catch {
+                return { ...note, title: "⚠️ Decryption failed", content: "" };
+              }
+            }
+            return note;
+          })
+        );
+        setNotes(decrypted);
+      } else {
+        setNotes(data);
+      }
+    } catch {
+      addToast("error", "Network error. Check your connection.");
     } finally {
       setLoading(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentView, debouncedQuery]);
 
   useEffect(() => {
@@ -159,52 +168,44 @@ export default function Dashboard() {
     fetchNotes();
   }, [userId, currentView, debouncedQuery, vaultUnlocked, fetchNotes]);
 
-  // Note actions
   const handleSaveNote = async (
     id: string | null,
     title: string,
     content: string,
     isPinned: boolean,
-    isLocked: boolean
+    isLocked: boolean,
+    color: NoteColor
   ) => {
     setIsSaving(true);
     try {
-      // Always read from ref — avoids stale closure when called right after unlock
       const pwd = vaultPasswordRef.current;
-
-      // Encrypt vault notes client-side before sending to the server
       let encryptedData: string | null = null;
       let storedTitle = title;
       let storedContent = content;
 
       if (isLocked && pwd) {
         encryptedData = await encryptNote(title, content, pwd);
-        // Store empty strings so the DB never holds plaintext for vault notes
         storedTitle = "";
         storedContent = "";
       } else if (isLocked && !pwd) {
-        // Safety guard: never save a vault note without encryption
-        console.error("Cannot save vault note: vault password not in memory");
+        addToast("error", "Vault is locked. Cannot save encrypted note.");
         setIsSaving(false);
         return;
       }
 
-      if (id) {
-        await fetch(`/api/notes/${id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ title: storedTitle, content: storedContent, encryptedData, isPinned, isLocked }),
-        });
-      } else {
-        await fetch("/api/notes", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ title: storedTitle, content: storedContent, encryptedData, isPinned, isLocked }),
-        });
+      const payload = { title: storedTitle, content: storedContent, encryptedData, isPinned, isLocked, color };
+      const res = await fetch(id ? `/api/notes/${id}` : "/api/notes", {
+        method: id ? "PUT" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        addToast("error", data.error || "Failed to save note.");
+        return;
       }
       fetchNotes();
-    } catch (err) {
-      console.error("Failed to save note:", err);
+    } catch {
       addToast("error", "Failed to save note. Please try again.");
     } finally {
       setIsSaving(false);
@@ -213,14 +214,14 @@ export default function Dashboard() {
 
   const handlePinToggle = async (id: string, currentVal: boolean) => {
     try {
-      await fetch(`/api/notes/${id}`, {
+      const res = await fetch(`/api/notes/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isPinned: !currentVal }),
       });
+      if (!res.ok) { addToast("error", "Failed to update note"); return; }
       fetchNotes();
-    } catch (err) {
-      console.error("Pin toggle failed:", err);
+    } catch {
       addToast("error", "Failed to update note");
     }
   };
@@ -228,85 +229,66 @@ export default function Dashboard() {
   const executeLockToggle = async (id: string, currentVal: boolean) => {
     try {
       const movingToVault = !currentVal;
-      // Always read from ref — avoids stale closure
       const pwd = vaultPasswordRef.current;
 
       if (movingToVault && pwd) {
         const note = notes.find((n) => n.id === id);
         if (note) {
           const encryptedData = await encryptNote(note.title, note.content, pwd);
-          await fetch(`/api/notes/${id}`, {
+          const res = await fetch(`/api/notes/${id}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ title: "", content: "", encryptedData, isLocked: true }),
           });
+          if (!res.ok) { addToast("error", "Failed to move note to vault"); return; }
           fetchNotes();
           return;
         }
       }
 
       if (!movingToVault) {
-        // Moving out of vault — decrypt first, then clear encryptedData
         const note = notes.find((n) => n.id === id);
         if (note && pwd && note.encryptedData) {
           try {
             const { title, content } = await decryptNote(note.encryptedData, pwd);
-            await fetch(`/api/notes/${id}`, {
+            const res = await fetch(`/api/notes/${id}`, {
               method: "PUT",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                title,
-                content,
-                encryptedData: null,
-                isLocked: false,
-              }),
+              body: JSON.stringify({ title, content, encryptedData: null, isLocked: false }),
             });
+            if (!res.ok) { addToast("error", "Failed to remove note from vault"); return; }
             fetchNotes();
             return;
           } catch {
-            console.error("Failed to decrypt note before unlocking");
+            addToast("error", "Failed to decrypt note");
+            return;
           }
         }
       }
 
-      // Fallback: only allow toggling lock OFF (removing from vault) without password
-      // Never allow moving INTO vault without encryption
-      if (movingToVault) {
-        console.error("Cannot move note to vault: vault password not in memory");
-        return;
-      }
+      if (movingToVault) { addToast("error", "Vault is locked"); return; }
       await fetch(`/api/notes/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isLocked: false }),
       });
       fetchNotes();
-    } catch (err) {
-      console.error("Lock toggle failed:", err);
+    } catch {
+      addToast("error", "Failed to update note");
     }
   };
 
   const handleLockToggle = (id: string, currentVal: boolean) => {
     if (!currentVal) {
-      // Moving INTO vault — check if vault exists first
-      if (!hasVaultPassword) {
-        // No vault set up yet — redirect user to vault section to create one
-        handleViewChange("vault");
-        return;
-      }
+      if (!hasVaultPassword) { handleViewChange("vault"); return; }
       if (!vaultPasswordRef.current) {
-        // Vault exists but not unlocked — show inline password modal
         const note = notes.find((n) => n.id === id);
-        if (note) {
-          pendingVaultLockRef.current = { id: note.id, title: note.title, content: note.content };
-        }
+        if (note) pendingVaultLockRef.current = { id: note.id, title: note.title, content: note.content };
         setVaultUnlockModalOpen(true);
         return;
       }
-      // Vault already unlocked — show confirmation then encrypt
       setConfirmAction({ type: "vault", id, currentVal });
     } else {
-      // Moving OUT of vault — show confirmation
       setConfirmAction({ type: "unlock", id, currentVal });
     }
   };
@@ -329,9 +311,7 @@ export default function Dashboard() {
             });
             fetchNotes();
             return;
-          } catch {
-            console.error("Failed to decrypt vault note before moving to bin");
-          }
+          } catch { /* fall through */ }
         }
         await fetch(`/api/notes/${id}`, {
           method: "PUT",
@@ -346,52 +326,41 @@ export default function Dashboard() {
         });
       }
       fetchNotes();
-    } catch (err) {
-      console.error("Delete toggle failed:", err);
+    } catch {
+      addToast("error", "Failed to update note");
     }
   };
 
   const handleDeleteToggle = (id: string, currentVal: boolean) => {
-    if (!currentVal) {
-      setConfirmAction({ type: "bin", id, currentVal });
-    } else {
-      executeDeleteToggle(id, currentVal);
-    }
+    if (!currentVal) setConfirmAction({ type: "bin", id, currentVal });
+    else executeDeleteToggle(id, currentVal);
   };
 
-  const handleDeletePermanent = (id: string) => {
-    setConfirmAction({ type: "delete", id });
-  };
+  const handleDeletePermanent = (id: string) => setConfirmAction({ type: "delete", id });
 
   const executeDeletePermanent = async (id: string) => {
     try {
-      await fetch(`/api/notes/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/notes/${id}`, { method: "DELETE" });
+      if (!res.ok) { addToast("error", "Failed to delete note"); return; }
       fetchNotes();
-    } catch (err) {
-      console.error("Permanent delete failed:", err);
+    } catch {
+      addToast("error", "Failed to delete note");
     }
   };
 
   const executeEmptyBin = async () => {
     try {
-      await fetch("/api/notes/empty-bin", { method: "DELETE" });
+      const res = await fetch("/api/notes/empty-bin", { method: "DELETE" });
+      if (!res.ok) { addToast("error", "Failed to empty bin"); return; }
       fetchNotes();
-    } catch (err) {
-      console.error("Empty bin failed:", err);
+    } catch {
+      addToast("error", "Failed to empty bin");
     }
   };
 
-  const handleDeleteVault = () => {
-    setConfirmAction({ type: "deleteVault", id: "" });
-  };
-
-  const handleDeleteAccount = () => {
-    setConfirmAction({ type: "deleteAccount", id: "" });
-  };
-
-  const handleEmptyBin = () => {
-    setConfirmAction({ type: "emptyBin", id: "" });
-  };
+  const handleDeleteVault = () => setConfirmAction({ type: "deleteVault", id: "" });
+  const handleDeleteAccount = () => setConfirmAction({ type: "deleteAccount", id: "" });
+  const handleEmptyBin = () => setConfirmAction({ type: "emptyBin", id: "" });
 
   const handleLockVault = () => {
     setVaultUnlocked(false);
@@ -425,26 +394,17 @@ export default function Dashboard() {
     };
   }, [vaultUnlocked, resetInactivityTimer]);
 
-  // Duplicate note
   const handleDuplicate = async (id: string) => {
     try {
       const res = await fetch(`/api/notes/${id}/duplicate`, { method: "POST" });
-      if (res.ok) {
-        addToast("duplicate", "Note duplicated");
-        fetchNotes();
-      } else {
-        const data = await res.json();
-        addToast("error", data.error || "Failed to duplicate note");
-      }
-    } catch {
-      addToast("error", "Failed to duplicate note");
-    }
+      if (res.ok) { addToast("duplicate", "Note duplicated"); fetchNotes(); }
+      else { const d = await res.json(); addToast("error", d.error || "Failed to duplicate note"); }
+    } catch { addToast("error", "Failed to duplicate note"); }
   };
 
-  // Export all visible notes as JSON
   const handleExport = () => {
-    const exportable = notes.map(({ id, title, content, isPinned, updatedAt, createdAt }) => ({
-      id, title, content, isPinned, updatedAt, createdAt,
+    const exportable = notes.map(({ id, title, content, color, isPinned, updatedAt, createdAt }) => ({
+      id, title, content, color, isPinned, updatedAt, createdAt,
     }));
     const blob = new Blob([JSON.stringify(exportable, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
@@ -456,21 +416,11 @@ export default function Dashboard() {
     addToast("success", `Exported ${exportable.length} notes`);
   };
 
-  const handleNewNote = () => {
-    setEditingNote(null);
-    setEditorOpen(true);
-  };
-
-  const handleEditNote = (note: Note) => {
-    setEditingNote(note);
-    setEditorOpen(true);
-  };
-
+  const handleNewNote = () => { setEditingNote(null); setEditorOpen(true); };
+  const handleEditNote = (note: Note) => { setEditingNote(note); setEditorOpen(true); };
   const handleViewChange = (view: "all" | "vault" | "bin") => {
     setCurrentView(view);
     setSearchQuery("");
-    // Vault password stays in memory for the whole session.
-    // Only clear it when the vault is explicitly deleted or the page is refreshed.
   };
 
   const viewConfig = {
@@ -479,7 +429,6 @@ export default function Dashboard() {
     bin:   { title: "Recycle Bin",  icon: Trash2,   iconColor: "text-red-400",   emptyText: "Recycle bin is empty." },
   };
 
-  // Sort notes client-side
   const sortedNotes = [...notes].sort((a, b) => {
     if (sortOption === "title") return (a.title || "").localeCompare(b.title || "");
     if (sortOption === "created") return new Date(b.createdAt || b.updatedAt).getTime() - new Date(a.createdAt || a.updatedAt).getTime();
@@ -489,7 +438,6 @@ export default function Dashboard() {
   const pinnedNotes = sortedNotes.filter((n) => n.isPinned);
   const unpinnedNotes = sortedNotes.filter((n) => !n.isPinned);
   const hasPinnedDivider = pinnedNotes.length > 0 && unpinnedNotes.length > 0 && currentView !== "bin";
-
   const ViewIcon = viewConfig[currentView].icon;
 
   return (
@@ -501,14 +449,11 @@ export default function Dashboard() {
         hasVaultPassword={hasVaultPassword}
         onDeleteVault={handleDeleteVault}
         onDeleteAccount={handleDeleteAccount}
-        user={{
-          name: session?.user?.name,
-          email: session?.user?.email,
-        }}
+        user={{ name: session?.user?.name, email: session?.user?.email }}
       />
 
       <main className="flex-1 flex flex-col min-h-screen">
-        <header className="sticky top-0 md:top-0 z-20 px-6 py-4 border-b border-white/5 bg-black/20 backdrop-blur-lg">
+        <header className="sticky top-0 z-20 px-6 py-4 border-b border-white/5 bg-black/20 backdrop-blur-lg">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center gap-3">
               <ViewIcon size={22} className={viewConfig[currentView].iconColor} />
@@ -519,10 +464,8 @@ export default function Dashboard() {
                 </span>
               )}
               {currentView === "vault" && vaultUnlocked && (
-                <button
-                  onClick={() => setLockVaultConfirm(true)}
-                  className="group relative overflow-hidden ml-2 flex items-center gap-1.5 px-3 h-7 rounded-lg text-xs font-semibold text-amber-400 bg-amber-500/10 border border-amber-500/20 transition-all duration-200 hover:bg-amber-500/20 hover:border-amber-500/40"
-                >
+                <button onClick={() => setLockVaultConfirm(true)}
+                  className="group relative overflow-hidden ml-2 flex items-center gap-1.5 px-3 h-7 rounded-lg text-xs font-semibold text-amber-400 bg-amber-500/10 border border-amber-500/20 transition-all duration-200 hover:bg-amber-500/20 hover:border-amber-500/40">
                   <div className="absolute inset-0 pointer-events-none z-0">
                     <div className="absolute -inset-full top-0 block w-1/2 h-full bg-gradient-to-r from-transparent via-amber-400/[0.15] to-transparent skew-x-12 transform -translate-x-full transition-transform duration-700 ease-out group-hover:translate-x-[400%]" />
                   </div>
@@ -531,10 +474,8 @@ export default function Dashboard() {
                 </button>
               )}
               {currentView === "bin" && !loading && notes.length > 0 && (
-                <button
-                  onClick={handleEmptyBin}
-                  className="group relative overflow-hidden ml-2 flex items-center gap-1.5 px-3 h-7 rounded-lg text-xs font-semibold text-red-400 bg-red-500/10 border border-red-500/20 transition-all duration-200 hover:bg-red-500/20 hover:border-red-500/40"
-                >
+                <button onClick={handleEmptyBin}
+                  className="group relative overflow-hidden ml-2 flex items-center gap-1.5 px-3 h-7 rounded-lg text-xs font-semibold text-red-400 bg-red-500/10 border border-red-500/20 transition-all duration-200 hover:bg-red-500/20 hover:border-red-500/40">
                   <div className="absolute inset-0 pointer-events-none z-0">
                     <div className="absolute -inset-full top-0 block w-1/2 h-full bg-gradient-to-r from-transparent via-red-400/[0.15] to-transparent skew-x-12 transform -translate-x-full transition-transform duration-700 ease-out group-hover:translate-x-[400%]" />
                   </div>
@@ -545,13 +486,10 @@ export default function Dashboard() {
             </div>
 
             <div className="flex items-center gap-2 w-full sm:w-auto">
-              {/* Sort menu */}
               {currentView !== "bin" && (
                 <div className="relative">
-                  <button
-                    onClick={() => setShowSortMenu((v) => !v)}
-                    className="flex items-center gap-1.5 px-3 h-10 rounded-xl text-xs font-medium text-white/50 bg-white/5 border border-white/10 hover:text-white hover:bg-white/10 transition-all duration-200 shrink-0"
-                  >
+                  <button onClick={() => setShowSortMenu((v) => !v)}
+                    className="flex items-center gap-1.5 px-3 h-10 rounded-xl text-xs font-medium text-white/50 bg-white/5 border border-white/10 hover:text-white hover:bg-white/10 transition-all duration-200 shrink-0">
                     <ArrowUpDown size={13} />
                     <span className="hidden sm:inline">
                       {sortOption === "updated" ? "Last edited" : sortOption === "created" ? "Created" : "Title"}
@@ -562,13 +500,8 @@ export default function Dashboard() {
                       <div className="fixed inset-0 z-10" onClick={() => setShowSortMenu(false)} />
                       <div className="absolute right-0 top-12 z-20 glass-panel border border-white/10 rounded-xl p-1 min-w-[140px] shadow-xl">
                         {(["updated", "created", "title"] as SortOption[]).map((opt) => (
-                          <button
-                            key={opt}
-                            onClick={() => { setSortOption(opt); setShowSortMenu(false); }}
-                            className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
-                              sortOption === opt ? "text-purple-300 bg-purple-500/10" : "text-white/60 hover:text-white hover:bg-white/5"
-                            }`}
-                          >
+                          <button key={opt} onClick={() => { setSortOption(opt); setShowSortMenu(false); }}
+                            className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors ${sortOption === opt ? "text-purple-300 bg-purple-500/10" : "text-white/60 hover:text-white hover:bg-white/5"}`}>
                             {opt === "updated" ? "Last edited" : opt === "created" ? "Date created" : "Title A–Z"}
                           </button>
                         ))}
@@ -578,74 +511,50 @@ export default function Dashboard() {
                 </div>
               )}
 
-              {/* Export button — only on all notes view */}
               {currentView === "all" && notes.length > 0 && (
-                <button
-                  onClick={handleExport}
-                  title="Export notes as JSON"
-                  className="flex items-center justify-center w-10 h-10 rounded-xl text-white/40 bg-white/5 border border-white/10 hover:text-white hover:bg-white/10 transition-all duration-200 shrink-0"
-                >
+                <button onClick={handleExport} title="Export notes as JSON"
+                  className="flex items-center justify-center w-10 h-10 rounded-xl text-white/40 bg-white/5 border border-white/10 hover:text-white hover:bg-white/10 transition-all duration-200 shrink-0">
                   <Download size={15} />
                 </button>
               )}
 
+              {/* Keyboard shortcuts button */}
+              <button onClick={() => setShortcutsOpen(true)} title="Keyboard shortcuts (?)"
+                className="flex items-center justify-center w-10 h-10 rounded-xl text-white/30 bg-white/5 border border-white/10 hover:text-white hover:bg-white/10 transition-all duration-200 shrink-0">
+                <Keyboard size={15} />
+              </button>
+
               <div className="w-full sm:w-72">
                 {currentView !== "vault" && (
-                <Input
-                  placeholder="Search notes..."
-                  variant="flat"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  startContent={<Search size={16} className="text-white/30" />}
-                  classNames={{
-                    inputWrapper: "glass-input h-10",
-                    input: "text-white text-sm placeholder:text-white/30",
-                  }}
-                />
+                  <Input placeholder="Search notes..." variant="flat" value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    startContent={<Search size={16} className="text-white/30" />}
+                    classNames={{ inputWrapper: "glass-input h-10", input: "text-white text-sm placeholder:text-white/30" }} />
                 )}
               </div>
             </div>
           </div>
         </header>
 
-        {/* AnimatePresence monitors when the layout component content mount or unmount switches views */}
         <div className="flex-1 p-6 overflow-y-auto">
           <AnimatePresence mode="wait">
-            <motion.div
-              key={currentView}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
-              className="w-full h-full"
-            >
+            <motion.div key={currentView} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }} className="w-full h-full">
               {currentView === "vault" && !vaultUnlocked && vaultChecked ? (
                 <VaultLock
-                  onUnlock={(pwd) => {
-                    setVaultPasswordSync(pwd);
-                    setVaultUnlocked(true);
-                  }}
+                  onUnlock={(pwd) => { setVaultPasswordSync(pwd); setVaultUnlocked(true); }}
                   hasVaultPassword={hasVaultPassword}
-                  onPasswordSet={(pwd) => {
-                    setHasVaultPassword(true);
-                    setVaultPasswordSync(pwd);
-                    setVaultUnlocked(true);
-                  }}
+                  onPasswordSet={(pwd) => { setHasVaultPassword(true); setVaultPasswordSync(pwd); setVaultUnlocked(true); }}
                 />
+              ) : currentView === "vault" && !vaultUnlocked && !vaultChecked ? (
+                <div className="flex items-center justify-center h-64"><Spinner color="secondary" size="lg" /></div>
               ) : loading ? (
-                <div className="flex items-center justify-center h-64">
-                  <Spinner color="secondary" size="lg" />
-                </div>
+                <div className="flex items-center justify-center h-64"><Spinner color="secondary" size="lg" /></div>
               ) : notes.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-64 text-center p-4 gap-4">
-                  <p className="text-white/40 text-sm max-w-sm">
-                    {viewConfig[currentView].emptyText}
-                  </p>
+                  <p className="text-white/40 text-sm max-w-sm">{viewConfig[currentView].emptyText}</p>
                   {(currentView === "all" || currentView === "vault") && (
-                    <button
-                      onClick={handleNewNote}
-                      className="md:hidden btn-sheen flex items-center gap-2 px-5 h-10 rounded-xl bg-primary text-white text-sm font-semibold shadow-lg shadow-purple-500/20"
-                    >
+                    <button onClick={handleNewNote}
+                      className="md:hidden btn-sheen flex items-center gap-2 px-5 h-10 rounded-xl bg-primary text-white text-sm font-semibold shadow-lg shadow-purple-500/20">
                       <Plus size={16} />
                       {currentView === "vault" ? "Add to Vault" : "Create Note"}
                     </button>
@@ -654,7 +563,6 @@ export default function Dashboard() {
               ) : (
                 <div className="space-y-6">
                   <AnimatePresence mode="popLayout">
-                    {/* Pinned section */}
                     {hasPinnedDivider && (
                       <div key="pinned-section">
                         <p className="text-[11px] font-semibold text-white/30 uppercase tracking-widest mb-3 px-1">Pinned</p>
@@ -667,8 +575,6 @@ export default function Dashboard() {
                         </div>
                       </div>
                     )}
-
-                    {/* Others / all notes */}
                     {hasPinnedDivider && (
                       <div key="others-section">
                         <p className="text-[11px] font-semibold text-white/30 uppercase tracking-widest mb-3 px-1">Others</p>
@@ -681,8 +587,6 @@ export default function Dashboard() {
                         </div>
                       </div>
                     )}
-
-                    {/* No pinned divider — flat grid */}
                     {!hasPinnedDivider && (
                       <div key="flat-grid" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                         {sortedNotes.map((note) => (
@@ -711,13 +615,9 @@ export default function Dashboard() {
 
       <InstallPrompt />
 
-      {/* Inline vault unlock — shown when locking a note from outside the vault view */}
       <VaultUnlockModal
         isOpen={vaultUnlockModalOpen}
-        onClose={() => {
-          setVaultUnlockModalOpen(false);
-          pendingVaultLockRef.current = null;
-        }}
+        onClose={() => { setVaultUnlockModalOpen(false); pendingVaultLockRef.current = null; }}
         onUnlock={async (pwd) => {
           setVaultPasswordSync(pwd);
           setVaultUnlockModalOpen(false);
@@ -726,16 +626,14 @@ export default function Dashboard() {
           if (pending) {
             try {
               const encryptedData = await encryptNote(pending.title, pending.content, pwd);
-              await fetch(`/api/notes/${pending.id}`, {
+              const res = await fetch(`/api/notes/${pending.id}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ title: "", content: "", encryptedData, isLocked: true }),
               });
-              addToast("vault", "Note moved to Secret Vault");
-              fetchNotes();
-            } catch (err) {
-              console.error("Failed to encrypt note after inline unlock:", err);
-            }
+              if (res.ok) { addToast("vault", "Note moved to Secret Vault"); fetchNotes(); }
+              else addToast("error", "Failed to move note to vault");
+            } catch { addToast("error", "Failed to encrypt note"); }
           }
         }}
       />
@@ -746,46 +644,23 @@ export default function Dashboard() {
           onClose={() => setConfirmAction(null)}
           onConfirm={() => {
             if (!confirmAction) return;
-            if (confirmAction.type === "vault") {
-              addToast("vault", "Note moved to Secret Vault");
-              executeLockToggle(confirmAction.id, confirmAction.currentVal!);
-            } else if (confirmAction.type === "unlock") {
-              addToast("vault", "Note retrieved from Secret Vault");
-              executeLockToggle(confirmAction.id, confirmAction.currentVal!);
-            } else if (confirmAction.type === "bin") {
-              addToast("bin", "Note moved to Recycle Bin");
-              executeDeleteToggle(confirmAction.id, confirmAction.currentVal!);
-            } else if (confirmAction.type === "delete") {
-              addToast("deleted", "Note permanently deleted");
-              executeDeletePermanent(confirmAction.id);
-            } else if (confirmAction.type === "emptyBin") {
-              addToast("deleted", "Recycle Bin emptied");
-              executeEmptyBin();
-            } else if (confirmAction.type === "deleteVault") {
+            const { type, id, currentVal } = confirmAction;
+            if (type === "vault")         { addToast("vault", "Note moved to Secret Vault"); executeLockToggle(id, currentVal!); }
+            else if (type === "unlock")   { addToast("vault", "Note retrieved from Secret Vault"); executeLockToggle(id, currentVal!); }
+            else if (type === "bin")      { addToast("bin", "Note moved to Recycle Bin"); executeDeleteToggle(id, currentVal!); }
+            else if (type === "delete")   { addToast("deleted", "Note permanently deleted"); executeDeletePermanent(id); }
+            else if (type === "emptyBin") { addToast("deleted", "Recycle Bin emptied"); executeEmptyBin(); }
+            else if (type === "deleteVault") {
               fetch("/api/vault/delete-confirm", { method: "POST" })
                 .then((res) => {
-                  if (res.ok) {
-                    setHasVaultPassword(false);
-                    setVaultUnlocked(false);
-                    setVaultPasswordSync(null);
-                    if (currentView === "vault") setCurrentView("all");
-                    fetchNotes();
-                  } else {
-                    console.error("Failed to delete vault");
-                  }
-                })
-                .catch(console.error);
-            } else if (confirmAction.type === "deleteAccount") {
-              // Assumed API route for user deletion. Adjust if your endpoint is different.
+                  if (res.ok) { setHasVaultPassword(false); setVaultUnlocked(false); setVaultPasswordSync(null); if (currentView === "vault") setCurrentView("all"); fetchNotes(); }
+                  else addToast("error", "Failed to delete vault");
+                }).catch(() => addToast("error", "Failed to delete vault"));
+            }
+            else if (type === "deleteAccount") {
               fetch("/api/user", { method: "DELETE" })
-                .then((res) => {
-                  if (res.ok) {
-                    signOut({ callbackUrl: "/" });
-                  } else {
-                    console.error("Failed to delete account");
-                  }
-                })
-                .catch(console.error);
+                .then((res) => { if (res.ok) signOut({ callbackUrl: "/" }); else addToast("error", "Failed to delete account"); })
+                .catch(() => addToast("error", "Failed to delete account"));
             }
             setConfirmAction(null);
           }}
@@ -799,13 +674,13 @@ export default function Dashboard() {
             "Delete Permanently?"
           }
           message={
-            confirmAction.type === "vault" ? "Are you sure you want to move this note to the Secret Vault? You will need your master password to view it again." :
-            confirmAction.type === "unlock" ? "Are you sure you want to remove this note from the Vault? It will become visible in all notes." :
-            confirmAction.type === "bin" ? "Are you sure you want to move this note to the Recycle Bin? You can recover it later." :
-            confirmAction.type === "emptyBin" ? "This will permanently delete all notes in the Recycle Bin. This action cannot be undone." :
-            confirmAction.type === "deleteVault" ? "Are you sure you want to completely destroy the vault? This instantly wipes out your master setup and removes all locked notes forever." :
-            confirmAction.type === "deleteAccount" ? "Are you sure you want to permanently delete your account? All of your notes, your vault, and your data will be wiped out immediately. This action cannot be undone." :
-            "Are you sure you want to permanently delete this note? This action cannot be undone."
+            confirmAction.type === "vault" ? "This note will be encrypted and moved to your Secret Vault. You'll need your master password to view it." :
+            confirmAction.type === "unlock" ? "This note will be decrypted and moved back to All Notes." :
+            confirmAction.type === "bin" ? "Move this note to the Recycle Bin? You can recover it later." :
+            confirmAction.type === "emptyBin" ? "This will permanently delete all notes in the Recycle Bin. This cannot be undone." :
+            confirmAction.type === "deleteVault" ? "This will permanently destroy your vault and all encrypted notes inside it. This cannot be undone." :
+            confirmAction.type === "deleteAccount" ? "This will permanently delete your account, all notes, and your vault. This cannot be undone." :
+            "Permanently delete this note? This cannot be undone."
           }
           confirmText={
             confirmAction.type === "vault" ? "Move" :
@@ -819,12 +694,11 @@ export default function Dashboard() {
           isDestructive={["delete", "emptyBin", "deleteVault", "deleteAccount"].includes(confirmAction.type)}
         />
       )}
-      {/* Mobile floating action button — always visible on mobile */}
-      <button
-        onClick={handleNewNote}
+
+      {/* Mobile FAB */}
+      <button onClick={handleNewNote}
         className="md:hidden fixed bottom-6 right-6 z-40 group w-14 h-14 rounded-full bg-primary shadow-xl shadow-purple-500/30 flex items-center justify-center text-white transition-all duration-200 hover:scale-110 hover:shadow-purple-500/50 active:scale-95 overflow-hidden"
-        aria-label="New Note"
-      >
+        aria-label="New Note">
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute -inset-full top-0 block w-1/2 h-full bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12 transform -translate-x-full transition-transform duration-700 ease-out group-hover:translate-x-[400%]" />
         </div>
@@ -841,9 +715,8 @@ export default function Dashboard() {
         isDestructive={false}
       />
 
+      <ShortcutsModal isOpen={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
       <Toast toasts={toasts} onRemove={removeToast} />
-
-      {/* Session inactivity guard — warns after 30 min, signs out after 60 s countdown */}
       <SessionGuard />
     </div>
   );

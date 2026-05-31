@@ -21,10 +21,10 @@ const config: Config = {
       themes: {
         dark: {
           colors: {
-            background: "#040209", // Darkest violet-black
+            background: "#040209",
             foreground: "#F4F2F7",
             primary: {
-              DEFAULT: "#8B5CF6", // Vivid Purple
+              DEFAULT: "#8B5CF6",
               foreground: "#FFFFFF",
             },
             focus: "#8B5CF6",
@@ -32,6 +32,7 @@ const config: Config = {
         },
       },
     }),
+    require("@tailwindcss/typography"),
   ],
 };
 

@@ -169,14 +169,16 @@ export default function Sidebar({
             >
               Logout
             </DropdownItem>
-            <DropdownItem
-              key="delete-vault"
-              className={hasVaultPassword ? "text-amber-400 font-medium data-[hover=true]:bg-amber-500/15 data-[hover=true]:text-amber-300" : "hidden"}
-              startContent={<AlertTriangle size={16} />}
-              onPress={onDeleteVault}
-            >
-              Delete Vault
-            </DropdownItem>
+            {hasVaultPassword ? (
+              <DropdownItem
+                key="delete-vault"
+                className="text-amber-400 font-medium data-[hover=true]:bg-amber-500/15 data-[hover=true]:text-amber-300"
+                startContent={<AlertTriangle size={16} />}
+                onPress={onDeleteVault}
+              >
+                Delete Vault
+              </DropdownItem>
+            ) : null}
             <DropdownItem
               key="delete-account"
               className="text-red-400 font-medium data-[hover=true]:bg-red-500/15 data-[hover=true]:text-red-300"
