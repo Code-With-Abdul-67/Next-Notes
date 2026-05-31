@@ -3,7 +3,7 @@ import type { MetadataRoute } from "next";
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "NEXT Notes",
-    short_name: "GlassNotes",
+    short_name: "NEXT Notes",
     description: "A beautiful, secure, glassmorphism-themed Notes Application",
     start_url: "/",
     display: "standalone",

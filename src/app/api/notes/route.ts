@@ -27,7 +27,9 @@ export async function GET(request: Request) {
         userId,
         isDeleted,
         isLocked,
-        OR: searchQuery
+        // Vault notes are stored with empty title/content (encrypted in encryptedData),
+        // so searching plaintext fields in vault view would always return zero results.
+        OR: searchQuery && !isLocked
           ? [
               { title: { contains: searchQuery, mode: "insensitive" } },
               { content: { contains: searchQuery, mode: "insensitive" } },

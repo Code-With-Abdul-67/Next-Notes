@@ -53,7 +53,7 @@ export default function NoteEditorModal({
     setAutoSaveStatus("idle");
   }, [note, isOpen, defaultLocked]);
 
-  // Auto-save for existing notes only
+  // Auto-save for existing notes only — fires when title, content, isPinned, or isLocked changes
   const triggerAutoSave = useCallback(() => {
     if (isNewNote || !isOpen) return;
     if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
@@ -68,8 +68,8 @@ export default function NoteEditorModal({
   useEffect(() => {
     if (!isNewNote && isOpen) triggerAutoSave();
     return () => { if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current); };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [title, content]);
+  // triggerAutoSave already captures all dependencies — listing it here is sufficient
+  }, [triggerAutoSave]);
 
   const handleSave = async () => {
     if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);

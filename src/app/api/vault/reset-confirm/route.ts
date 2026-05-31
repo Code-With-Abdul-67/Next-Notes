@@ -31,18 +31,22 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "No verification code requested." }, { status: 400 });
     }
 
-    // Constant-time comparison to prevent timing attacks
-    const storedBuf = Buffer.from(verificationRecord.code.padEnd(64));
-    const inputBuf = Buffer.from(code.padEnd(64));
-    const codeMatch = storedBuf.length === inputBuf.length && timingSafeEqual(storedBuf, inputBuf);
-
-    if (!codeMatch) {
-      return NextResponse.json({ error: "Incorrect verification code." }, { status: 400 });
-    }
-
+    // Check expiry BEFORE comparing the code to avoid leaking whether the code is correct
     if (new Date() > verificationRecord.expiresAt) {
       await prisma.verificationCode.delete({ where: { email } }).catch(() => {});
       return NextResponse.json({ error: "Verification code has expired. Please request a new one." }, { status: 400 });
+    }
+
+    // Constant-time comparison to prevent timing attacks.
+    // Both codes are 6-digit strings; pad to a fixed 64-byte hex representation so
+    // timingSafeEqual never throws due to mismatched buffer lengths.
+    const normalize = (s: string) => Buffer.from(s.slice(0, 64).padEnd(64, "\0"), "utf8");
+    const storedBuf = normalize(verificationRecord.code);
+    const inputBuf  = normalize(code);
+    const codeMatch = timingSafeEqual(storedBuf, inputBuf);
+
+    if (!codeMatch) {
+      return NextResponse.json({ error: "Incorrect verification code." }, { status: 400 });
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 12);

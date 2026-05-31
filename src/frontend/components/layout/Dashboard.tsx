@@ -76,6 +76,11 @@ export default function Dashboard() {
     currentVal?: boolean;
   } | null>(null);
 
+  // All UI state declared together — avoids temporal dead zone in production builds
+  const [lockVaultConfirm, setLockVaultConfirm] = useState(false);
+  const [sortOption, setSortOption] = useState<SortOption>("updated");
+  const [showSortMenu, setShowSortMenu] = useState(false);
+
   // Keyboard shortcut: Ctrl+N / Cmd+N → new note
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -95,15 +100,11 @@ export default function Dashboard() {
   useEffect(() => {
     const checkVault = async () => {
       try {
-        const res = await fetch("/api/vault/verify", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ password: "___check___" }),
-        });
+        const res = await fetch("/api/vault/status");
         // 401 means session not ready yet — don't mark as checked, retry on next userId change
         if (res.status === 401) return;
         const data = await res.json();
-        setHasVaultPassword(!data.notInitialized);
+        setHasVaultPassword(data.hasVaultPassword === true);
       } catch {
         setHasVaultPassword(false);
       }
@@ -492,11 +493,6 @@ export default function Dashboard() {
 
   const ViewIcon = viewConfig[currentView].icon;
 
-  // All state must be declared before return
-  const [lockVaultConfirm, setLockVaultConfirm] = useState(false);
-  const [sortOption, setSortOption] = useState<SortOption>("updated");
-  const [showSortMenu, setShowSortMenu] = useState(false);
-
   return (
     <div className="flex flex-col md:flex-row min-h-screen">
       <Sidebar
@@ -595,6 +591,7 @@ export default function Dashboard() {
               )}
 
               <div className="w-full sm:w-72">
+                {currentView !== "vault" && (
                 <Input
                   placeholder="Search notes..."
                   variant="flat"
@@ -606,6 +603,7 @@ export default function Dashboard() {
                     input: "text-white text-sm placeholder:text-white/30",
                   }}
                 />
+                )}
               </div>
             </div>
           </div>
