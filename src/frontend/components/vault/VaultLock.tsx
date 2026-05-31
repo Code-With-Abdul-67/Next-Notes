@@ -143,11 +143,11 @@ export default function VaultLock({ onUnlock, hasVaultPassword, onPasswordSet }:
             <AnimatePresence>
               {error && (
                 <motion.div
-                  initial={{ opacity: 0, x: 80, scale: 0.95 }}
-                  animate={{ opacity: 1, x: 0, scale: 1 }}
-                  exit={{ opacity: 0, x: 40, scale: 0.95 }}
-                  transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                  className="fixed top-5 right-5 z-[9999] flex items-center gap-2.5 px-4 py-3 rounded-xl border border-red-500/40 bg-red-500/15 backdrop-blur-md shadow-lg text-sm text-white/90 font-medium max-w-xs cursor-pointer"
+                  initial={{ opacity: 0, y: -6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: 0.2 }}
+                  className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-red-500/40 bg-red-500/10 text-sm text-white/90 font-medium cursor-pointer"
                   onClick={() => setError("")}
                 >
                   <AlertCircle size={15} className="text-red-400 shrink-0" />

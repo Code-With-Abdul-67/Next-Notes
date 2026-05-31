@@ -83,7 +83,7 @@ export default function NoteEditorModal({
   return (
     <Modal
       isOpen={isOpen}
-      onOpenChange={onClose}
+      onOpenChange={(open) => { if (!open) onClose(); }}
       size="2xl"
       backdrop="blur"
       classNames={{

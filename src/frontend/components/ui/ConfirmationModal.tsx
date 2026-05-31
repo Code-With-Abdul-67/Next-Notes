@@ -25,7 +25,7 @@ export default function ConfirmationModal({
   return (
     <Modal
       isOpen={isOpen}
-      onOpenChange={onClose}
+      onOpenChange={(open) => { if (!open) onClose(); }}
       backdrop="blur"
       classNames={{
         base: "glass-panel border border-white/10 rounded-2xl bg-black/40 text-white",

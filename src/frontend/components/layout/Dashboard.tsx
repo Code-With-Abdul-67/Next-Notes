@@ -54,8 +54,7 @@ export default function Dashboard() {
   const [hasVaultPassword, setHasVaultPassword] = useState(false);
   const [vaultChecked, setVaultChecked] = useState(false);
   // Vault password held in memory for the whole session — NOT cleared on view change
-  const [vaultPassword, setVaultPassword] = useState<string | null>(null);
-  // Ref mirror so async callbacks always read the latest password (avoids stale closures)
+  // Only the ref is used in async callbacks to avoid stale closures
   const vaultPasswordRef = useRef<string | null>(null);
   // Inline unlock modal — shown when locking a note from "All Notes" without vault unlocked
   const [vaultUnlockModalOpen, setVaultUnlockModalOpen] = useState(false);
@@ -65,7 +64,6 @@ export default function Dashboard() {
   // Always update both state (for re-renders) and ref (for async callbacks)
   const setVaultPasswordSync = (pwd: string | null) => {
     vaultPasswordRef.current = pwd;
-    setVaultPassword(pwd);
   };
 
   const { toasts, addToast, removeToast } = useToast();

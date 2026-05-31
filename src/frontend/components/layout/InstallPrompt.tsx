@@ -23,11 +23,7 @@ export default function InstallPrompt() {
     // Check localStorage if user dismissed the prompt
     const isDismissed = localStorage.getItem("pwa-prompt-dismissed") === "true";
 
-    if (!standalone && !isDismissed) {
-      setShowPrompt(true);
-    }
-
-    // Android/Chrome beforeinstallprompt listener
+    // Android/Chrome beforeinstallprompt listener — must be registered before checking
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e);
@@ -37,6 +33,11 @@ export default function InstallPrompt() {
     };
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+
+    // Only show for iOS (no beforeinstallprompt event) or when deferred prompt fires
+    if (!standalone && !isDismissed && ios) {
+      setShowPrompt(true);
+    }
 
     return () => {
       window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);

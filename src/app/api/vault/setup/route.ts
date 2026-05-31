@@ -15,8 +15,17 @@ export async function POST(request: Request) {
   try {
     const { password } = await request.json();
 
-    if (!password || password.length < 4) {
+    if (!password || typeof password !== "string" || password.length < 4) {
       return NextResponse.json({ error: "Password must be at least 4 characters long" }, { status: 400 });
+    }
+
+    // Prevent silently overwriting an existing vault password
+    const existing = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { vaultPassword: true },
+    });
+    if (existing?.vaultPassword) {
+      return NextResponse.json({ error: "Vault already exists. Use reset to change your password." }, { status: 409 });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);

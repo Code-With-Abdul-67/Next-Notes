@@ -29,12 +29,12 @@ export default function SessionGuard() {
   const countdownTimer  = useRef<ReturnType<typeof setInterval> | null>(null);
   const isWarningRef    = useRef(false); // ref mirror so event handler reads latest value
 
-  const clearCountdown = () => {
+  const clearCountdown = useCallback(() => {
     if (countdownTimer.current) {
       clearInterval(countdownTimer.current);
       countdownTimer.current = null;
     }
-  };
+  }, []);
 
   const startCountdown = useCallback(() => {
     setCountdown(COUNTDOWN_S);
@@ -49,7 +49,7 @@ export default function SessionGuard() {
         return prev - 1;
       });
     }, 1000);
-  }, []);
+  }, [clearCountdown]);
 
   const showWarningModal = useCallback(() => {
     isWarningRef.current = true;

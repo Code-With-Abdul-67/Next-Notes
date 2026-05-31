@@ -4,6 +4,10 @@ import { authOptions } from "@/backend/lib/auth";
 import { prisma } from "@/backend/lib/prisma";
 import { sendVaultResetEmail } from "@/backend/lib/email";
 
+// Simple in-memory cooldown: email -> lastRequestAt timestamp
+const resetCooldown = new Map<string, number>();
+const COOLDOWN_MS = 60 * 1000; // 1 minute between requests
+
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
   if (!session || !session.user || !session.user.email) {
@@ -11,6 +15,17 @@ export async function POST(request: Request) {
   }
 
   const email = session.user.email;
+
+  // Rate limit: one reset email per minute per account
+  const lastRequest = resetCooldown.get(email);
+  const now = Date.now();
+  if (lastRequest && now - lastRequest < COOLDOWN_MS) {
+    const retryAfter = Math.ceil((COOLDOWN_MS - (now - lastRequest)) / 1000);
+    return NextResponse.json(
+      { error: `Please wait ${retryAfter}s before requesting another code.` },
+      { status: 429 }
+    );
+  }
 
   try {
     const code = Math.floor(100000 + Math.random() * 900000).toString();
@@ -23,6 +38,9 @@ export async function POST(request: Request) {
     });
 
     await sendVaultResetEmail(email, code);
+
+    // Record the successful send time
+    resetCooldown.set(email, now);
 
     return NextResponse.json({ message: "Verification code sent to your email" });
   } catch (error: any) {

@@ -11,7 +11,7 @@ const nextConfig: NextConfig = {
     ],
   },
   
-  // Aapke existing headers
+  // Security headers
   async headers() {
     return [
       {
