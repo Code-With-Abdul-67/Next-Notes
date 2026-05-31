@@ -13,6 +13,8 @@ export const authOptions: NextAuthOptions = {
   ],
   session: {
     strategy: "jwt",
+    // Session expires after 7 days of inactivity (rolling window via NextAuth)
+    maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
   },
   callbacks: {
     async session({ session, token }) {

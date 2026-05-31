@@ -13,6 +13,7 @@ import VaultUnlockModal from "@/frontend/components/vault/VaultUnlockModal";
 import InstallPrompt from "@/frontend/components/layout/InstallPrompt";
 import ConfirmationModal from "@/frontend/components/ui/ConfirmationModal";
 import Toast, { useToast } from "@/frontend/components/ui/Toast";
+import SessionGuard from "@/frontend/components/layout/SessionGuard";
 import { encryptNote, decryptNote } from "@/frontend/lib/crypto";
 
 type SortOption = "updated" | "created" | "title";
@@ -843,6 +844,9 @@ export default function Dashboard() {
       />
 
       <Toast toasts={toasts} onRemove={removeToast} />
+
+      {/* Session inactivity guard — warns after 30 min, signs out after 60 s countdown */}
+      <SessionGuard />
     </div>
   );
 }
