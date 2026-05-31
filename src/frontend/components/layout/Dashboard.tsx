@@ -100,9 +100,9 @@ export default function Dashboard() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ password: "___check___" }),
         });
+        // 401 means session not ready yet — don't mark as checked, retry on next userId change
+        if (res.status === 401) return;
         const data = await res.json();
-        // notInitialized means no vault password set yet
-        // any other response (wrong password = 401, or success) means vault exists
         setHasVaultPassword(!data.notInitialized);
       } catch {
         setHasVaultPassword(false);
