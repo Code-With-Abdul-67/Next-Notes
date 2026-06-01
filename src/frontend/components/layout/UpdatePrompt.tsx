@@ -95,9 +95,10 @@ export default function UpdatePrompt() {
           key="update-prompt"
           initial={{ opacity: 0, y: 80, scale: 0.96 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 60, scale: 0.96 }}
+          exit={{ opacity: 0, y: 80, scale: 0.96 }}
           transition={{ type: "spring", stiffness: 320, damping: 28 }}
-          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[9990] w-[calc(100%-2rem)] max-w-sm"
+          className="fixed left-1/2 -translate-x-1/2 z-[9990] w-[calc(100%-2rem)] max-w-sm"
+          style={{ bottom: "max(1.5rem, env(safe-area-inset-bottom, 1.5rem))" }}
         >
           <div className="glass-panel rounded-2xl border border-purple-500/25 p-4 shadow-2xl shadow-purple-900/40">
             <div className="flex items-start gap-3">

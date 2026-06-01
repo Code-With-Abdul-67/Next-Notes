@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { Input, Spinner } from "@nextui-org/react";
-import { Search, FileText, Trash2, Lock, Trash, Plus, LockKeyhole, ArrowUpDown, Download, Keyboard } from "lucide-react";
+import { Search, FileText, Trash2, Lock, Trash, Plus, LockKeyhole, ArrowUpDown, Keyboard } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import Sidebar from "@/frontend/components/layout/Sidebar";
 import NoteCard from "@/frontend/components/notes/NoteCard";
@@ -402,19 +402,7 @@ export default function Dashboard() {
     } catch { addToast("error", "Failed to duplicate note"); }
   };
 
-  const handleExport = () => {
-    const exportable = notes.map(({ id, title, content, color, isPinned, updatedAt, createdAt }) => ({
-      id, title, content, color, isPinned, updatedAt, createdAt,
-    }));
-    const blob = new Blob([JSON.stringify(exportable, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `next-notes-export-${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    addToast("success", `Exported ${exportable.length} notes`);
-  };
+
 
   const handleNewNote = () => { setEditingNote(null); setEditorOpen(true); };
   const handleEditNote = (note: Note) => { setEditingNote(note); setEditorOpen(true); };
@@ -511,12 +499,7 @@ export default function Dashboard() {
                 </div>
               )}
 
-              {currentView === "all" && notes.length > 0 && (
-                <button onClick={handleExport} title="Export notes as JSON"
-                  className="flex items-center justify-center w-10 h-10 rounded-xl text-white/40 bg-white/5 border border-white/10 hover:text-white hover:bg-white/10 transition-all duration-200 shrink-0">
-                  <Download size={15} />
-                </button>
-              )}
+
 
               {/* Keyboard shortcuts button */}
               <button onClick={() => setShortcutsOpen(true)} title="Keyboard shortcuts (?)"

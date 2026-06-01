@@ -4,7 +4,7 @@ import { Folder, Lock, Trash2, LogOut, Plus, ChevronLeft, ChevronRight, Menu, Us
 import { Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from "@nextui-org/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { signOut } from "next-auth/react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import ConfirmationModal from "@/frontend/components/ui/ConfirmationModal";
 
@@ -21,54 +21,74 @@ interface SidebarProps {
   onDeleteAccount?: () => void;
 }
 
-export default function Sidebar({
+const NAV_ITEMS = [
+  {
+    id: "all" as const,
+    label: "All Notes",
+    icon: Folder,
+    activeClass: "bg-blue-500/20 text-blue-300 border-blue-500/20 shadow-blue-500/5",
+    hoverClass: "hover:bg-blue-500/10 hover:text-blue-200 hover:border-blue-500/10",
+    iconActive: "text-blue-400",
+    sheenColor: "via-blue-400/[0.10]",
+  },
+  {
+    id: "vault" as const,
+    label: "Secret Vault",
+    icon: Lock,
+    activeClass: "bg-amber-500/20 text-amber-300 border-amber-500/20 shadow-amber-500/5",
+    hoverClass: "hover:bg-amber-500/10 hover:text-amber-200 hover:border-amber-500/10",
+    iconActive: "text-amber-400",
+    sheenColor: "via-amber-400/[0.10]",
+  },
+  {
+    id: "bin" as const,
+    label: "Recycle Bin",
+    icon: Trash2,
+    activeClass: "bg-red-500/20 text-red-300 border-red-500/20 shadow-red-500/5",
+    hoverClass: "hover:bg-red-500/10 hover:text-red-200 hover:border-red-500/10",
+    iconActive: "text-red-400",
+    sheenColor: "via-red-400/[0.10]",
+  },
+] as const;
+
+/** Returns true once the viewport is ≥ 768px (Tailwind's md breakpoint). */
+function useIsMd() {
+  const [isMd, setIsMd] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 768px)");
+    setIsMd(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMd(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+  return isMd;
+}
+
+// ─── Shared sidebar body ──────────────────────────────────────────────────────
+
+interface SidebarContentProps {
+  currentView: "all" | "vault" | "bin";
+  isCollapsed: boolean;
+  onNavClick: (view: "all" | "vault" | "bin") => void;
+  onNewNote: () => void;
+  user: { name?: string | null; email?: string | null };
+  hasVaultPassword: boolean;
+  onDeleteVault: () => void;
+  onDeleteAccount?: () => void;
+  onLogout: () => void;
+}
+
+function SidebarContent({
   currentView,
-  onViewChange,
+  isCollapsed,
+  onNavClick,
   onNewNote,
   user,
   hasVaultPassword,
   onDeleteVault,
   onDeleteAccount,
-}: SidebarProps) {
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
-
-  const navItems = [
-    {
-      id: "all",
-      label: "All Notes",
-      icon: Folder,
-      activeClass: "bg-blue-500/20 text-blue-300 border-blue-500/20 shadow-blue-500/5",
-      hoverClass: "hover:bg-blue-500/10 hover:text-blue-200 hover:border-blue-500/10",
-      iconActive: "text-blue-400",
-      sheenColor: "via-blue-400/[0.10]",
-    },
-    {
-      id: "vault",
-      label: "Secret Vault",
-      icon: Lock,
-      activeClass: "bg-amber-500/20 text-amber-300 border-amber-500/20 shadow-amber-500/5",
-      hoverClass: "hover:bg-amber-500/10 hover:text-amber-200 hover:border-amber-500/10",
-      iconActive: "text-amber-400",
-      sheenColor: "via-amber-400/[0.10]",
-    },
-    {
-      id: "bin",
-      label: "Recycle Bin",
-      icon: Trash2,
-      activeClass: "bg-red-500/20 text-red-300 border-red-500/20 shadow-red-500/5",
-      hoverClass: "hover:bg-red-500/10 hover:text-red-200 hover:border-red-500/10",
-      iconActive: "text-red-400",
-      sheenColor: "via-red-400/[0.10]",
-    },
-  ] as const;
-
-  const handleNavClick = (view: "all" | "vault" | "bin") => {
-    onViewChange(view);
-    setMobileOpen(false);
-  };
-
+  onLogout,
+}: SidebarContentProps) {
   const initials = (user.name || "U")
     .split(" ")
     .map((w) => w[0])
@@ -76,13 +96,7 @@ export default function Sidebar({
     .slice(0, 2)
     .toUpperCase();
 
-  const AvatarFallback = () => (
-    <div className="w-8 h-8 text-xs rounded-full bg-gradient-to-tr from-purple-600 to-indigo-600 border border-purple-500/30 flex items-center justify-center font-bold text-white shrink-0">
-      {initials}
-    </div>
-  );
-
-  const SidebarContent = () => (
+  return (
     <div className="flex flex-col h-full justify-between p-4">
       <div className="space-y-6">
         {/* Brand */}
@@ -115,13 +129,13 @@ export default function Sidebar({
 
         {/* Navigation */}
         <nav className="space-y-1">
-          {navItems.map((item) => {
+          {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
             const isActive = currentView === item.id;
             return (
               <button
                 key={item.id}
-                onClick={() => handleNavClick(item.id)}
+                onClick={() => onNavClick(item.id)}
                 className={`w-full group relative overflow-hidden flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 border ${
                   isActive
                     ? `${item.activeClass} shadow-lg`
@@ -148,14 +162,18 @@ export default function Sidebar({
             <div className="w-full cursor-pointer hover:bg-white/5 transition-colors p-1.5 rounded-xl flex items-center justify-center">
               {!isCollapsed ? (
                 <div className="flex items-center gap-3 w-full px-1">
-                  <AvatarFallback />
+                  <div className="w-8 h-8 text-xs rounded-full bg-gradient-to-tr from-purple-600 to-indigo-600 border border-purple-500/30 flex items-center justify-center font-bold text-white shrink-0">
+                    {initials}
+                  </div>
                   <div className="flex flex-col min-w-0">
                     <span className="text-white/90 text-sm font-semibold truncate">{user.name || "User"}</span>
                     <span className="text-white/40 text-xs truncate max-w-[140px]">{user.email || ""}</span>
                   </div>
                 </div>
               ) : (
-                <AvatarFallback />
+                <div className="w-8 h-8 text-xs rounded-full bg-gradient-to-tr from-purple-600 to-indigo-600 border border-purple-500/30 flex items-center justify-center font-bold text-white shrink-0">
+                  {initials}
+                </div>
               )}
             </div>
           </DropdownTrigger>
@@ -164,7 +182,7 @@ export default function Sidebar({
             <DropdownItem
               key="logout"
               startContent={<LogOut size={16} />}
-              onPress={() => setLogoutConfirmOpen(true)}
+              onPress={onLogout}
               className="text-white/70 font-medium data-[hover=true]:bg-white/10 data-[hover=true]:text-white"
             >
               Logout
@@ -192,6 +210,43 @@ export default function Sidebar({
       </div>
     </div>
   );
+}
+
+// ─── Main export ──────────────────────────────────────────────────────────────
+
+export default function Sidebar({
+  currentView,
+  onViewChange,
+  onNewNote,
+  user,
+  hasVaultPassword,
+  onDeleteVault,
+  onDeleteAccount,
+}: SidebarProps) {
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
+
+  // Only render the desktop aside on md+ screens so Framer Motion's animated
+  // width never leaks into the mobile layout and causes the sidebar-bleed bug.
+  const isMd = useIsMd();
+
+  const handleNavClick = (view: "all" | "vault" | "bin") => {
+    onViewChange(view);
+    setMobileOpen(false);
+  };
+
+  const sharedContentProps: SidebarContentProps = {
+    currentView,
+    isCollapsed,
+    onNavClick: handleNavClick,
+    onNewNote,
+    user,
+    hasVaultPassword,
+    onDeleteVault,
+    onDeleteAccount,
+    onLogout: () => setLogoutConfirmOpen(true),
+  };
 
   return (
     <>
@@ -223,28 +278,33 @@ export default function Sidebar({
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
               className="relative flex flex-col w-64 h-full glass-panel border-y-0 border-l-0"
             >
-              <SidebarContent />
+              {/* isCollapsed is always false in the mobile drawer */}
+              <SidebarContent {...sharedContentProps} isCollapsed={false} />
             </motion.div>
           </div>
         )}
       </AnimatePresence>
 
-      {/* Desktop sidebar */}
-      <motion.aside
-        initial={false}
-        animate={{ width: isCollapsed ? 80 : 256 }}
-        className="hidden md:flex flex-col border-r border-white/5 h-screen sticky top-0 z-30 bg-black/20 backdrop-blur-md"
-      >
-        <div className="relative h-full flex flex-col">
-          <button
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            className="absolute -right-3 top-10 w-6 h-6 rounded-full bg-purple-900 border border-white/10 hover:border-purple-500/50 flex items-center justify-center text-white/80 hover:text-white transition-all z-50 cursor-pointer"
-          >
-            {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
-          </button>
-          <SidebarContent />
-        </div>
-      </motion.aside>
+      {/* Desktop sidebar — only mounted on md+ so Framer Motion width animation
+          never affects the mobile layout (fixes the sidebar-bleed bug). */}
+      {isMd && (
+        <motion.aside
+          initial={false}
+          animate={{ width: isCollapsed ? 80 : 256 }}
+          style={{ overflow: "hidden" }}
+          className="flex flex-col border-r border-white/5 h-screen sticky top-0 z-30 bg-black/20 backdrop-blur-md"
+        >
+          <div className="relative h-full flex flex-col">
+            <button
+              onClick={() => setIsCollapsed(!isCollapsed)}
+              className="absolute -right-3 top-10 w-6 h-6 rounded-full bg-purple-900 border border-white/10 hover:border-purple-500/50 flex items-center justify-center text-white/80 hover:text-white transition-all z-50 cursor-pointer"
+            >
+              {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+            </button>
+            <SidebarContent {...sharedContentProps} />
+          </div>
+        </motion.aside>
+      )}
 
       {/* Logout confirmation */}
       <ConfirmationModal
