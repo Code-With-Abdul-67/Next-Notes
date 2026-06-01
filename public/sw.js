@@ -2,7 +2,7 @@
 // Bump this version string on every deployment so the browser detects a new SW.
 // The page will show an "Update available" card and only activate after the user
 // clicks "Update" — no silent forced reloads.
-const CACHE_VERSION = "next-notes-v4";
+const CACHE_VERSION = "next-notes-v5";
 const STATIC_ASSETS = [
   "/",
   "/favicon.ico",

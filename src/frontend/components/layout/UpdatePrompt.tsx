@@ -10,18 +10,12 @@ import { RefreshCw, X, Sparkles } from "lucide-react";
  *  2. A new service worker is waiting to activate
  *
  * Never shows on desktop browsers or in a regular browser tab.
+ *
+ * iOS notes:
+ *  - display-mode check is deferred to useEffect (matchMedia can lie at SSR/first paint)
+ *  - We watch BOTH registration.waiting (already queued) AND updatefound (new install)
+ *  - The controllerchange listener is always attached regardless of waiting state
  */
-
-function isMobilePWA(): boolean {
-  if (typeof window === "undefined") return false;
-  // Must be running in standalone mode (added to home screen)
-  const isStandalone = window.matchMedia("(display-mode: standalone)").matches;
-  if (!isStandalone) return false;
-  // Must be a mobile device (Android or iOS)
-  const ua = navigator.userAgent;
-  const isMobile = /Android|iPhone|iPad|iPod/i.test(ua);
-  return isMobile;
-}
 
 export default function UpdatePrompt() {
   const [showPrompt, setShowPrompt] = useState(false);
@@ -29,56 +23,80 @@ export default function UpdatePrompt() {
   const waitingWorkerRef = useRef<ServiceWorker | null>(null);
 
   useEffect(() => {
-    // Only run for mobile PWA installs
-    if (!isMobilePWA()) return;
     if (!("serviceWorker" in navigator)) return;
 
-    const registerAndWatch = async () => {
-      try {
-        const registration = await navigator.serviceWorker.register("/sw.js", {
-          scope: "/",
+    // Defer the standalone check to after paint — iOS Safari can return false
+    // for display-mode: standalone on the very first synchronous evaluation.
+    const isStandalone =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      ("standalone" in window.navigator && (window.navigator as any).standalone === true);
+
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+    if (!isStandalone || !isMobile) return;
+
+    let cleanupInterval: ReturnType<typeof setInterval> | null = null;
+
+    const handleWaiting = (sw: ServiceWorker) => {
+      waitingWorkerRef.current = sw;
+      setShowPrompt(true);
+    };
+
+    const watchRegistration = (registration: ServiceWorkerRegistration) => {
+      // Case 1: a new SW is already sitting in waiting state
+      // (e.g. app was backgrounded, update downloaded silently)
+      if (registration.waiting) {
+        handleWaiting(registration.waiting);
+      }
+
+      // Case 2: a new SW starts installing after we mount
+      registration.addEventListener("updatefound", () => {
+        const newWorker = registration.installing;
+        if (!newWorker) return;
+
+        newWorker.addEventListener("statechange", () => {
+          if (
+            newWorker.state === "installed" &&
+            navigator.serviceWorker.controller
+          ) {
+            handleWaiting(newWorker);
+          }
         });
+      });
 
-        const handleWaiting = (sw: ServiceWorker) => {
-          waitingWorkerRef.current = sw;
-          setShowPrompt(true);
-        };
+      // Poll for updates every 30s — iOS doesn't push updatefound proactively
+      cleanupInterval = setInterval(() => {
+        registration.update().catch(() => {});
+      }, 30_000);
+    };
 
-        // Already waiting (e.g. tab was in background)
-        if (registration.waiting) {
-          handleWaiting(registration.waiting);
-          return;
+    const init = async () => {
+      try {
+        // getRegistration first — avoids a redundant re-register if page.tsx
+        // already registered the SW, which can cause iOS to miss updatefound.
+        let registration = await navigator.serviceWorker.getRegistration("/");
+
+        if (!registration) {
+          registration = await navigator.serviceWorker.register("/sw.js", {
+            scope: "/",
+          });
         }
 
-        // New SW starts installing
-        registration.addEventListener("updatefound", () => {
-          const newWorker = registration.installing;
-          if (!newWorker) return;
-          newWorker.addEventListener("statechange", () => {
-            if (
-              newWorker.state === "installed" &&
-              navigator.serviceWorker.controller
-            ) {
-              handleWaiting(newWorker);
-            }
-          });
-        });
-
-        // Poll for updates every 60s while the app is open
-        const interval = setInterval(() => registration.update(), 60_000);
-        return () => clearInterval(interval);
+        watchRegistration(registration);
       } catch (err) {
-        console.error("SW registration failed:", err);
+        console.error("[UpdatePrompt] SW error:", err);
       }
     };
 
-    registerAndWatch();
+    init();
 
-    // Reload once the new SW takes control
+    // Reload once the new SW takes control (fired after skipWaiting)
     const handleControllerChange = () => window.location.reload();
     navigator.serviceWorker.addEventListener("controllerchange", handleControllerChange);
+
     return () => {
       navigator.serviceWorker.removeEventListener("controllerchange", handleControllerChange);
+      if (cleanupInterval) clearInterval(cleanupInterval);
     };
   }, []);
 
