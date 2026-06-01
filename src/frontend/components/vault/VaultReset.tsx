@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Input, Card, CardBody, CardHeader } from "@nextui-org/react";
-import { KeyRound, Loader2, ShieldCheck, ArrowLeft, AlertCircle } from "lucide-react";
+import { KeyRound, Loader2, ShieldCheck, ArrowLeft } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import Toast, { useToast } from "@/frontend/components/ui/Toast";
 
 interface VaultResetProps {
   onCancel: () => void;
@@ -18,22 +19,15 @@ export default function VaultReset({ onCancel, onResetSuccess }: VaultResetProps
   const [timeLeft, setTimeLeft] = useState(300);
   const [isExpired, setIsExpired] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
   const [verifiedCode, setVerifiedCode] = useState("");
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const { toasts, addToast, removeToast } = useToast();
 
   useEffect(() => {
     if (timeLeft <= 0) { setIsExpired(true); return; }
     const timer = setTimeout(() => setTimeLeft((t) => t - 1), 1000);
     return () => clearTimeout(timer);
   }, [timeLeft]);
-
-  // Auto-dismiss error toast after 4s
-  useEffect(() => {
-    if (!error) return;
-    const t = setTimeout(() => setError(""), 4000);
-    return () => clearTimeout(t);
-  }, [error]);
 
   const formatTime = (s: number) => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, "0")}`;
 
@@ -60,18 +54,16 @@ export default function VaultReset({ onCancel, onResetSuccess }: VaultResetProps
 
   const handleVerifyCode = () => {
     const fullCode = code.join("");
-    if (fullCode.length !== 6) { setError("Please enter the complete 6-digit code."); return; }
-    if (isExpired) { setError("The code has expired. Go back and request a new one."); return; }
+    if (fullCode.length !== 6) { addToast("error", "Please enter the complete 6-digit code."); return; }
+    if (isExpired) { addToast("error", "The code has expired. Go back and request a new one."); return; }
     setVerifiedCode(fullCode);
     setStep("password");
-    setError("");
   };
 
   const handlePasswordReset = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
-    if (newPassword.length < 4) { setError("New password must be at least 4 characters long."); return; }
-    if (newPassword !== confirmPassword) { setError("Passwords do not match."); return; }
+    if (newPassword.length < 4) { addToast("error", "New password must be at least 4 characters long."); return; }
+    if (newPassword !== confirmPassword) { addToast("error", "Passwords do not match."); return; }
     setLoading(true);
     try {
       const res = await fetch("/api/vault/reset-confirm", {
@@ -80,9 +72,9 @@ export default function VaultReset({ onCancel, onResetSuccess }: VaultResetProps
         body: JSON.stringify({ code: verifiedCode, newPassword }),
       });
       const data = await res.json();
-      if (!res.ok) { setError(data.error || "Failed to reset vault password."); }
+      if (!res.ok) { addToast("error", data.error || "Failed to reset vault password."); }
       else { onResetSuccess(); }
-    } catch { setError("Something went wrong. Please try again."); }
+    } catch { addToast("error", "Something went wrong. Please try again."); }
     finally { setLoading(false); }
   };
 
@@ -91,23 +83,7 @@ export default function VaultReset({ onCancel, onResetSuccess }: VaultResetProps
 
   return (
     <>
-      {/* Error toast — top-right, auto-dismisses */}
-      <AnimatePresence>
-        {error && (
-          <motion.div
-            initial={{ opacity: 0, x: 80, scale: 0.95 }}
-            animate={{ opacity: 1, x: 0, scale: 1 }}
-            exit={{ opacity: 0, x: 40, scale: 0.95 }}
-            transition={{ type: "spring", stiffness: 380, damping: 30 }}
-            className="fixed top-5 right-5 z-[9999] flex items-center gap-2.5 px-4 py-3 rounded-xl border border-red-500/40 bg-red-500/15 backdrop-blur-md shadow-lg text-sm text-white/90 font-medium max-w-xs cursor-pointer"
-            onClick={() => setError("")}
-          >
-            <AlertCircle size={15} className="text-red-400 shrink-0" />
-            <span>{error}</span>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
+      <Toast toasts={toasts} onRemove={removeToast} />
       <div className="flex justify-center items-center py-12 px-4">
         <Card className="glass-panel w-full max-w-md border border-white/10 rounded-2xl p-6 bg-black/40">
           <CardHeader className="flex flex-col items-center text-center pb-2 gap-2">
