@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSession, signOut } from "next-auth/react";
-import { Input, Spinner } from "@nextui-org/react";
+import { Input } from "@nextui-org/react";
+import CustomSpinner from "@/frontend/components/ui/CustomSpinner";
 import { Search, FileText, Trash2, Lock, Trash, Plus, LockKeyhole, ArrowUpDown, Keyboard } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import Sidebar from "@/frontend/components/layout/Sidebar";
@@ -529,9 +530,9 @@ export default function Dashboard() {
                   onPasswordSet={(pwd) => { setHasVaultPassword(true); setVaultPasswordSync(pwd); setVaultUnlocked(true); }}
                 />
               ) : currentView === "vault" && !vaultUnlocked && !vaultChecked ? (
-                <div className="flex items-center justify-center h-64"><Spinner color="secondary" size="lg" /></div>
+                <div className="flex items-center justify-center h-64"><CustomSpinner size={48} /></div>
               ) : loading ? (
-                <div className="flex items-center justify-center h-64"><Spinner color="secondary" size="lg" /></div>
+                <div className="flex items-center justify-center h-64"><CustomSpinner size={48} /></div>
               ) : notes.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-64 text-center p-4 gap-4">
                   <p className="text-white/40 text-sm max-w-sm">{viewConfig[currentView].emptyText}</p>
