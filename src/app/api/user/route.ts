@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/backend/lib/auth";
 import { prisma } from "@/backend/lib/prisma";
 
-export async function DELETE(request: Request) {
+export async function DELETE(_request: Request) {
   try {
     const session = await getServerSession(authOptions);
 

@@ -29,7 +29,7 @@ export default function UpdatePrompt() {
     // for display-mode: standalone on the very first synchronous evaluation.
     const isStandalone =
       window.matchMedia("(display-mode: standalone)").matches ||
-      ("standalone" in window.navigator && (window.navigator as any).standalone === true);
+      ("standalone" in window.navigator && (window.navigator as { standalone?: boolean }).standalone === true);
 
     const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 

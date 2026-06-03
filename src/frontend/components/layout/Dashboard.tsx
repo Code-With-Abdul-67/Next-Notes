@@ -76,6 +76,8 @@ export default function Dashboard() {
   const [sortOption, setSortOption] = useState<SortOption>("updated");
   const [showSortMenu, setShowSortMenu] = useState(false);
 
+  const handleNewNote = useCallback(() => { setEditingNote(null); setEditorOpen(true); }, []);
+
   // Keyboard shortcuts: Ctrl+N → new note, ? → shortcuts panel
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -91,10 +93,9 @@ export default function Dashboard() {
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [handleNewNote]);
 
-  const userId = (session?.user as any)?.id as string | undefined;
+  const userId = (session?.user as { id?: string })?.id as string | undefined;
 
   useEffect(() => {
     if (!userId) return;
@@ -166,6 +167,7 @@ export default function Dashboard() {
   useEffect(() => {
     if (!userId) return;
     if (currentView === "vault" && !vaultUnlocked) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchNotes();
   }, [userId, currentView, debouncedQuery, vaultUnlocked, fetchNotes]);
 
@@ -382,7 +384,7 @@ export default function Dashboard() {
       if (currentView === "vault") setCurrentView("all");
       addToast("vault", "Vault locked due to inactivity");
     }, INACTIVITY_MS);
-  }, [vaultUnlocked, currentView]);
+  }, [vaultUnlocked, currentView, addToast, INACTIVITY_MS]);
 
   useEffect(() => {
     if (!vaultUnlocked) return;
@@ -405,7 +407,7 @@ export default function Dashboard() {
 
 
 
-  const handleNewNote = () => { setEditingNote(null); setEditorOpen(true); };
+
   const handleEditNote = (note: Note) => { setEditingNote(note); setEditorOpen(true); };
   const handleViewChange = (view: "all" | "vault" | "bin") => {
     setCurrentView(view);

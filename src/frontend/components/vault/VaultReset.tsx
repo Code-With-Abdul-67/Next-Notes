@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Input, Card, CardBody, CardHeader } from "@nextui-org/react";
 import { KeyRound, Loader2, ShieldCheck, ArrowLeft } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+
 import Toast, { useToast } from "@/frontend/components/ui/Toast";
 
 interface VaultResetProps {
@@ -24,6 +24,7 @@ export default function VaultReset({ onCancel, onResetSuccess }: VaultResetProps
   const { toasts, addToast, removeToast } = useToast();
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (timeLeft <= 0) { setIsExpired(true); return; }
     const timer = setTimeout(() => setTimeLeft((t) => t - 1), 1000);
     return () => clearTimeout(timer);

@@ -8,7 +8,7 @@ import { sendVaultResetEmail } from "@/backend/lib/email";
 const resetCooldown = new Map<string, number>();
 const COOLDOWN_MS = 60 * 1000; // 1 minute between requests
 
-export async function POST(request: Request) {
+export async function POST(_request: Request) {
   const session = await getServerSession(authOptions);
   if (!session || !session.user || !session.user.email) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -43,11 +43,11 @@ export async function POST(request: Request) {
     resetCooldown.set(email, now);
 
     return NextResponse.json({ message: "Verification code sent to your email" });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Vault reset request error:", error);
     // Surface the real error message in development for easier debugging
     const message = process.env.NODE_ENV === "development"
-      ? `Email error: ${error?.message ?? String(error)}`
+      ? `Email error: ${(error as Error).message || "Unknown error"}`
       : "Failed to send reset email. Please try again.";
     return NextResponse.json({ error: message }, { status: 500 });
   }

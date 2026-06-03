@@ -69,7 +69,7 @@ export default function SessionGuard() {
     // Restart the inactivity timer
     if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
     inactivityTimer.current = setTimeout(showWarningModal, INACTIVITY_MS);
-  }, [showWarningModal]);
+  }, [showWarningModal, clearCountdown]);
 
   // Attach activity listeners on mount
   useEffect(() => {
@@ -87,7 +87,7 @@ export default function SessionGuard() {
         window.removeEventListener(evt, resetTimer)
       );
     };
-  }, [resetTimer, showWarningModal]);
+  }, [resetTimer, showWarningModal, clearCountdown]);
 
   const handleStayLoggedIn = () => {
     resetTimer();
@@ -172,7 +172,7 @@ export default function SessionGuard() {
                 </div>
                 <h2 className="text-lg font-bold text-white">Still there?</h2>
                 <p className="text-sm text-white/55 leading-relaxed max-w-[260px]">
-                  You've been inactive for 30 minutes. You'll be signed out automatically in{" "}
+                  You&apos;ve been inactive for 30 minutes. You&apos;ll be signed out automatically in{" "}
                   <span className="font-semibold text-white/80">{countdown} second{countdown !== 1 ? "s" : ""}</span>.
                 </p>
               </div>

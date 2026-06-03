@@ -13,7 +13,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const userId = (session.user as any).id as string;
+  const userId = (session.user as { id: string }).id as string;
   const { searchParams } = new URL(request.url);
 
   const isDeleted = searchParams.get("trash") === "true";
@@ -59,7 +59,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const userId = (session.user as any).id as string;
+  const userId = (session.user as { id: string }).id as string;
 
   try {
     const body = await request.json();

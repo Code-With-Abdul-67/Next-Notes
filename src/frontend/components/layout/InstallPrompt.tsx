@@ -9,11 +9,14 @@ export default function InstallPrompt() {
   const [isIOS, setIsIOS] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
   const [showPrompt, setShowPrompt] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
 
   useEffect(() => {
     // Detect iOS
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const ios = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsIOS(ios);
 
     // Detect standalone PWA mode

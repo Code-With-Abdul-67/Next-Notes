@@ -3,13 +3,13 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/backend/lib/auth";
 import { prisma } from "@/backend/lib/prisma";
 
-export async function POST(request: Request, context: any) {
+export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
   const session = await getServerSession(authOptions);
   if (!session || !session.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const userId = (session.user as any).id as string;
+  const userId = (session.user as { id: string }).id as string;
   const { id } = await context.params;
 
   try {

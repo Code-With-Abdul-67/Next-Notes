@@ -2,8 +2,6 @@
 
 import { Pin, Trash2, RotateCcw, Lock, Unlock, Calendar, Copy } from "lucide-react";
 import { motion } from "framer-motion";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 
 export type NoteColor = "red" | "orange" | "yellow" | "green" | "blue" | "purple" | "pink" | null;
 

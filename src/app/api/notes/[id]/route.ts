@@ -7,13 +7,13 @@ const MAX_TITLE_LENGTH = 500;
 const MAX_CONTENT_LENGTH = 100_000;
 const VALID_COLORS = new Set(["red", "orange", "yellow", "green", "blue", "purple", "pink"]);
 
-export async function PUT(request: Request, context: any) {
+export async function PUT(request: Request, context: { params: Promise<{ id: string }> }) {
   const session = await getServerSession(authOptions);
   if (!session || !session.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const userId = (session.user as any).id as string;
+  const userId = (session.user as { id: string }).id as string;
   const { id } = await context.params;
 
   if (!id || typeof id !== "string") {
@@ -63,13 +63,13 @@ export async function PUT(request: Request, context: any) {
   }
 }
 
-export async function DELETE(request: Request, context: any) {
+export async function DELETE(request: Request, context: { params: Promise<{ id: string }> }) {
   const session = await getServerSession(authOptions);
   if (!session || !session.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const userId = (session.user as any).id as string;
+  const userId = (session.user as { id: string }).id as string;
   const { id } = await context.params;
 
   if (!id || typeof id !== "string") {

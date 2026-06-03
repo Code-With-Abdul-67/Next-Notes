@@ -64,22 +64,24 @@ export default function NoteEditorModal({
   const isNewNote = !note;
 
   useEffect(() => {
-    if (note) {
-      setTitle(note.title);
-      setContent(note.content);
-      setIsPinned(note.isPinned);
-      setIsLocked(note.isLocked);
-      setColor(note.color ?? null);
-    } else {
-      setTitle("");
-      setContent("");
-      setIsPinned(false);
-      setIsLocked(defaultLocked);
-      setColor(null);
-    }
-    setAutoSaveStatus("idle");
-    setPreviewMode(false);
-    setShowColorPicker(false);
+    setTimeout(() => {
+      if (note) {
+        setTitle(note.title);
+        setContent(note.content);
+        setIsPinned(note.isPinned);
+        setIsLocked(note.isLocked);
+        setColor(note.color ?? null);
+      } else {
+        setTitle("");
+        setContent("");
+        setIsPinned(false);
+        setIsLocked(defaultLocked);
+        setColor(null);
+      }
+      setAutoSaveStatus("idle");
+      setPreviewMode(false);
+      setShowColorPicker(false);
+    }, 0);
   }, [note, isOpen, defaultLocked]);
 
   const triggerAutoSave = useCallback(() => {
@@ -94,9 +96,10 @@ export default function NoteEditorModal({
   }, [isNewNote, isOpen, note, title, content, isPinned, isLocked, color, onSave]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!isNewNote && isOpen) triggerAutoSave();
     return () => { if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current); };
-  }, [triggerAutoSave]);
+  }, [triggerAutoSave, isNewNote, isOpen]);
 
   const handleSave = async () => {
     if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
@@ -107,7 +110,7 @@ export default function NoteEditorModal({
   const wordCount = content.trim() ? content.trim().split(/\s+/).length : 0;
   const charCount = content.length;
 
-  const selectedColor = COLOR_OPTIONS.find((c) => c.value === color);
+
 
   return (
     <Modal

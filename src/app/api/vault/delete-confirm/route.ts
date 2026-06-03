@@ -3,14 +3,14 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/backend/lib/auth";
 import { prisma } from "@/backend/lib/prisma";
 
-export async function POST(request: Request) {
+export async function DELETE(_request: Request) {
   const session = await getServerSession(authOptions);
   
   if (!session || !session.user || !session.user.email) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const userId = (session.user as any).id;
+  const userId = (session.user as { id: string }).id;
 
   try {
     // Drop all locked notes and reset the vault password block

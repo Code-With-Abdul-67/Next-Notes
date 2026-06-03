@@ -10,7 +10,7 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const userId = (session.user as any).id;
+  const userId = (session.user as { id: string }).id;
 
   try {
     const result = await prisma.note.deleteMany({
@@ -18,7 +18,7 @@ export async function DELETE(request: Request) {
     });
 
     return NextResponse.json({ deleted: result.count });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error emptying bin:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }

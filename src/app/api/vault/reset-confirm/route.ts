@@ -12,7 +12,7 @@ export async function POST(request: Request) {
   }
 
   const email = session.user.email;
-  const userId = (session.user as any).id as string;
+  const userId = (session.user as { id: string }).id as string;
 
   try {
     const body = await request.json();

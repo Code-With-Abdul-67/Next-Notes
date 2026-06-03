@@ -56,6 +56,7 @@ function useIsMd() {
   const [isMd, setIsMd] = useState(false);
   useEffect(() => {
     const mq = window.matchMedia("(min-width: 768px)");
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsMd(mq.matches);
     const handler = (e: MediaQueryListEvent) => setIsMd(e.matches);
     mq.addEventListener("change", handler);

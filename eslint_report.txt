@@ -1,0 +1,206 @@
+
+C:\Next-Notes\check_schema.js
+  1:26  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+C:\Next-Notes\src\app\api\notes\[id]\duplicate\route.ts
+   6:55  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  12:35  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Next-Notes\src\app\api\notes\[id]\route.ts
+  10:54  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  16:35  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  66:57  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  72:35  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Next-Notes\src\app\api\notes\empty-bin\route.ts
+   7:30  warning  'request' is defined but never used       @typescript-eslint/no-unused-vars
+  13:35  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  21:19  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Next-Notes\src\app\api\notes\route.ts
+  16:35  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  62:35  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Next-Notes\src\app\api\user\route.ts
+  6:30  warning  'request' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Next-Notes\src\app\api\vault\delete-confirm\route.ts
+   6:28  warning  'request' is defined but never used       @typescript-eslint/no-unused-vars
+  13:35  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Next-Notes\src\app\api\vault\reset-confirm\route.ts
+  15:35  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Next-Notes\src\app\api\vault\reset-request\route.ts
+  11:28  warning  'request' is defined but never used       @typescript-eslint/no-unused-vars
+  46:19  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Next-Notes\src\app\api\vault\setup\route.ts
+  13:35  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Next-Notes\src\app\api\vault\status\route.ts
+  17:35  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Next-Notes\src\app\api\vault\verify\route.ts
+  18:35  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Next-Notes\src\backend\lib\auth.ts
+  22:26  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Next-Notes\src\frontend\components\layout\Dashboard.tsx
+   86:9   error    Error: Cannot access variable before it is declared
+
+`handleNewNote` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Next-Notes\src\frontend\components\layout\Dashboard.tsx:86:9
+  84 |       if ((e.ctrlKey || e.metaKey) && e.key === "n") {
+  85 |         e.preventDefault();
+> 86 |         handleNewNote();
+     |         ^^^^^^^^^^^^^ `handleNewNote` accessed before it is declared
+  87 |       }
+  88 |       if (e.key === "?" && !isTyping) {
+  89 |         setShortcutsOpen((v) => !v);
+
+C:\Next-Notes\src\frontend\components\layout\Dashboard.tsx:408:3
+  406 |
+  407 |
+> 408 |   const handleNewNote = () => { setEditingNote(null); setEditorOpen(true); };
+      |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `handleNewNote` is declared here
+  409 |   const handleEditNote = (note: Note) => { setEditingNote(note); setEditorOpen(true); };
+  410 |   const handleViewChange = (view: "all" | "vault" | "bin") => {
+  411 |     setCurrentView(view);                                  react-hooks/immutability
+   94:3   warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/exhaustive-deps')
+   97:36  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      @typescript-eslint/no-explicit-any
+  169:5   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Next-Notes\src\frontend\components\layout\Dashboard.tsx:169:5
+  167 |     if (!userId) return;
+  168 |     if (currentView === "vault" && !vaultUnlocked) return;
+> 169 |     fetchNotes();
+      |     ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  170 |   }, [userId, currentView, debouncedQuery, vaultUnlocked, fetchNotes]);
+  171 |
+  172 |   const handleSaveNote = async (  react-hooks/set-state-in-effect
+  385:6   warning  React Hook useCallback has missing dependencies: 'INACTIVITY_MS' and 'addToast'. Either include them or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           react-hooks/exhaustive-deps
+
+C:\Next-Notes\src\frontend\components\layout\InstallPrompt.tsx
+  12:56  error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   @typescript-eslint/no-explicit-any
+  16:77  error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   @typescript-eslint/no-explicit-any
+  17:5   error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Next-Notes\src\frontend\components\layout\InstallPrompt.tsx:17:5
+  15 |     // Detect iOS
+  16 |     const ios = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+> 17 |     setIsIOS(ios);
+     |     ^^^^^^^^ Avoid calling setState() directly within an effect
+  18 |
+  19 |     // Detect standalone PWA mode
+  20 |     const standalone = window.matchMedia("(display-mode: standalone)").matches;  react-hooks/set-state-in-effect
+
+C:\Next-Notes\src\frontend\components\layout\SessionGuard.tsx
+   72:6   warning  React Hook useCallback has a missing dependency: 'clearCountdown'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+   90:6   warning  React Hook useEffect has a missing dependency: 'clearCountdown'. Either include it or remove the dependency array    react-hooks/exhaustive-deps
+  175:22  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`                                                      react/no-unescaped-entities
+  175:59  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`                                                      react/no-unescaped-entities
+
+C:\Next-Notes\src\frontend\components\layout\Sidebar.tsx
+  59:5  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Next-Notes\src\frontend\components\layout\Sidebar.tsx:59:5
+  57 |   useEffect(() => {
+  58 |     const mq = window.matchMedia("(min-width: 768px)");
+> 59 |     setIsMd(mq.matches);
+     |     ^^^^^^^ Avoid calling setState() directly within an effect
+  60 |     const handler = (e: MediaQueryListEvent) => setIsMd(e.matches);
+  61 |     mq.addEventListener("change", handler);
+  62 |     return () => mq.removeEventListener("change", handler);  react-hooks/set-state-in-effect
+
+C:\Next-Notes\src\frontend\components\layout\UpdatePrompt.tsx
+  32:65  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Next-Notes\src\frontend\components\notes\NoteCard.tsx
+  5:8  warning  'ReactMarkdown' is defined but never used  @typescript-eslint/no-unused-vars
+  6:8  warning  'remarkGfm' is defined but never used      @typescript-eslint/no-unused-vars
+
+C:\Next-Notes\src\frontend\components\notes\NoteEditorModal.tsx
+   68:7   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Next-Notes\src\frontend\components\notes\NoteEditorModal.tsx:68:7
+  66 |   useEffect(() => {
+  67 |     if (note) {
+> 68 |       setTitle(note.title);
+     |       ^^^^^^^^ Avoid calling setState() directly within an effect
+  69 |       setContent(note.content);
+  70 |       setIsPinned(note.isPinned);
+  71 |       setIsLocked(note.isLocked);                                                         react-hooks/set-state-in-effect
+   97:31  error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Next-Notes\src\frontend\components\notes\NoteEditorModal.tsx:97:31
+   95 |
+   96 |   useEffect(() => {
+>  97 |     if (!isNewNote && isOpen) triggerAutoSave();
+      |                               ^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+   98 |     return () => { if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current); };
+   99 |   }, [triggerAutoSave]);
+  100 |  react-hooks/set-state-in-effect
+   99:6   warning  React Hook useEffect has missing dependencies: 'isNewNote' and 'isOpen'. Either include them or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            react-hooks/exhaustive-deps
+  110:9   warning  'selectedColor' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     @typescript-eslint/no-unused-vars
+
+C:\Next-Notes\src\frontend\components\vault\VaultReset.tsx
+   6:10  warning  'motion' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     @typescript-eslint/no-unused-vars
+   6:18  warning  'AnimatePresence' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/no-unused-vars
+  27:26  error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Next-Notes\src\frontend\components\vault\VaultReset.tsx:27:26
+  25 |
+  26 |   useEffect(() => {
+> 27 |     if (timeLeft <= 0) { setIsExpired(true); return; }
+     |                          ^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  28 |     const timer = setTimeout(() => setTimeLeft((t) => t - 1), 1000);
+  29 |     return () => clearTimeout(timer);
+  30 |   }, [timeLeft]);  react-hooks/set-state-in-effect
+
+C:\Next-Notes\tailwind.config.ts
+  35:5  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+C:\Next-Notes\types\next-auth.d.ts
+  1:8  warning  'NextAuth' is defined but never used  @typescript-eslint/no-unused-vars
+
+✖ 47 problems (32 errors, 15 warnings)
+  0 errors and 1 warning potentially fixable with the `--fix` option.
