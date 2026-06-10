@@ -20,6 +20,7 @@ export async function GET(request: Request) {
   const isLocked = searchParams.get("vault") === "true";
   const rawSearch = searchParams.get("search") || "";
   const searchQuery = rawSearch.trim().slice(0, 200);
+  const tagFilter = searchParams.get("tag") || "";
 
   try {
     // Auto-purge bin notes older than 30 days (non-fatal)
@@ -35,13 +36,21 @@ export async function GET(request: Request) {
         userId,
         isDeleted,
         isLocked,
-        // Vault notes store empty title/content — skip search for them
-        OR: searchQuery && !isLocked
-          ? [
-              { title: { contains: searchQuery, mode: "insensitive" } },
-              { content: { contains: searchQuery, mode: "insensitive" } },
-            ]
-          : undefined,
+        AND: [
+          // Text search (skipped for vault — content is encrypted)
+          searchQuery && !isLocked
+            ? {
+                OR: [
+                  { title: { contains: searchQuery, mode: "insensitive" } },
+                  { content: { contains: searchQuery, mode: "insensitive" } },
+                ],
+              }
+            : {},
+          // Tag filter
+          tagFilter
+            ? { tags: { contains: tagFilter, mode: "insensitive" } }
+            : {},
+        ],
       },
       orderBy: [{ isPinned: "desc" }, { updatedAt: "desc" }],
     });
@@ -68,6 +77,7 @@ export async function POST(request: Request) {
     const title = typeof body.title === "string" ? body.title.slice(0, MAX_TITLE_LENGTH) : "";
     const content = typeof body.content === "string" ? body.content.slice(0, MAX_CONTENT_LENGTH) : "";
     const color = typeof body.color === "string" && VALID_COLORS.has(body.color) ? body.color : null;
+    const tags = typeof body.tags === "string" ? body.tags.slice(0, 500) : "";
 
     if (!title && !content && !encryptedData) {
       return NextResponse.json({ error: "Note must have either a title or content" }, { status: 400 });
@@ -79,6 +89,7 @@ export async function POST(request: Request) {
         content,
         encryptedData: typeof encryptedData === "string" ? encryptedData : null,
         color,
+        tags,
         isPinned: isPinned === true,
         isLocked: isLocked === true,
         isDeleted: false,

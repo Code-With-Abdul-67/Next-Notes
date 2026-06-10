@@ -1,6 +1,6 @@
 "use client";
 
-import { Pin, Trash2, RotateCcw, Lock, Unlock, Calendar, Copy } from "lucide-react";
+import { Pin, Trash2, RotateCcw, Lock, Unlock, Calendar, Copy, Download } from "lucide-react";
 import { motion } from "framer-motion";
 
 export type NoteColor = "red" | "orange" | "yellow" | "green" | "blue" | "purple" | "pink" | null;
@@ -10,6 +10,7 @@ interface Note {
   title: string;
   content: string;
   color?: NoteColor;
+  tags?: string;
   isPinned: boolean;
   isLocked: boolean;
   isDeleted: boolean;
@@ -25,6 +26,7 @@ interface NoteCardProps {
   onDeleteToggle?: (id: string, currentVal: boolean) => void;
   onDeletePermanent?: (id: string) => void;
   onDuplicate?: (id: string) => void;
+  onExport?: (id: string, format: "md" | "txt") => void;
   view: "all" | "vault" | "bin";
 }
 
@@ -61,7 +63,7 @@ function IconBtn({
 }
 
 export default function NoteCard({
-  note, onEdit, onPinToggle, onLockToggle, onDeleteToggle, onDeletePermanent, onDuplicate, view,
+  note, onEdit, onPinToggle, onLockToggle, onDeleteToggle, onDeletePermanent, onDuplicate, onExport, view,
 }: NoteCardProps) {
   const formattedDate = new Date(note.updatedAt).toLocaleDateString(undefined, {
     month: "short", day: "numeric", year: "numeric",
@@ -85,10 +87,13 @@ export default function NoteCard({
     : "";
 
   const contentPreview = plainPreview
-    ? plainPreview.length > 120 ? plainPreview.slice(0, 120) + "…" : plainPreview
+    ? plainPreview.length > 100 ? plainPreview.slice(0, 100) + "…" : plainPreview
     : "No additional text";
 
+  const wordCount = note.content.trim() ? note.content.trim().split(/\s+/).length : 0;
+
   const colorStyle = note.color ? COLOR_STYLES[note.color] : null;
+  const noteTags = note.tags ? note.tags.split(",").filter(Boolean) : [];
 
   return (
     <motion.div
@@ -101,7 +106,7 @@ export default function NoteCard({
     >
       <div
         onClick={() => view !== "bin" && onEdit(note)}
-        className={`group relative overflow-hidden glass-card w-full h-48 flex flex-col justify-between rounded-xl border border-white/5 bg-white/5 backdrop-blur-md shadow-lg transition-all duration-300 cursor-pointer hover:bg-white/10 hover:border-white/20 hover:shadow-purple-500/5 ${
+        className={`group relative overflow-hidden glass-card w-full flex flex-col rounded-xl border border-white/5 bg-white/5 backdrop-blur-md shadow-lg transition-all duration-300 cursor-pointer hover:bg-white/10 hover:border-white/20 hover:shadow-purple-500/5 ${
           colorStyle ? `border-t-2 ${colorStyle.border} ${colorStyle.glow}` : ""
         }`}
       >
@@ -110,7 +115,7 @@ export default function NoteCard({
           <div className="absolute -inset-full top-0 block w-1/2 h-full bg-gradient-to-r from-transparent via-white/[0.06] to-transparent skew-x-12 transform -translate-x-full transition-transform duration-1000 ease-out group-hover:translate-x-[400%]" />
         </div>
 
-        <div className="relative z-10 flex flex-col justify-between h-full w-full">
+        <div className="relative z-10 flex flex-col h-full w-full">
           {/* Header */}
           <div className="flex justify-between items-start gap-2 pt-4 px-4 pb-2">
             <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -143,6 +148,23 @@ export default function NoteCard({
             </div>
           </div>
 
+          {/* Tags */}
+          {noteTags.length > 0 && (
+            <div className="flex flex-wrap gap-1 px-4 pb-1" onClick={(e) => e.stopPropagation()}>
+              {noteTags.slice(0, 3).map((tag) => (
+                <span
+                  key={tag}
+                  className="px-1.5 py-0.5 rounded-full bg-purple-500/10 border border-purple-500/15 text-[10px] text-purple-300/70 font-medium"
+                >
+                  #{tag}
+                </span>
+              ))}
+              {noteTags.length > 3 && (
+                <span className="text-[10px] text-white/30">+{noteTags.length - 3}</span>
+              )}
+            </div>
+          )}
+
           {/* Body — plain text preview (stripped markdown) */}
           <p className="text-white/60 text-xs leading-relaxed line-clamp-3 whitespace-pre-line px-4 py-1 flex-1">
             {contentPreview}
@@ -150,13 +172,20 @@ export default function NoteCard({
 
           {/* Footer */}
           <div
-            className="flex justify-between items-center bg-black/10 border-t border-white/5 py-2 px-4"
+            className="flex justify-between items-center bg-black/10 border-t border-white/5 py-2 px-4 mt-2"
             onClick={(e) => e.stopPropagation()}
             onTouchEnd={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center gap-1.5 text-[10px] text-white/40 transition-colors duration-300 group-hover:text-purple-300">
-              <Calendar size={11} className="text-white/30 transition-colors duration-300 group-hover:text-purple-400" />
-              <span>{fullTimestamp}</span>
+            <div className="flex flex-col gap-0.5">
+              <div className="flex items-center gap-1.5 text-[10px] text-white/40 transition-colors duration-300 group-hover:text-purple-300">
+                <Calendar size={11} className="text-white/30 transition-colors duration-300 group-hover:text-purple-400" />
+                <span>{fullTimestamp}</span>
+              </div>
+              {!note.isLocked && wordCount > 0 && (
+                <span className="text-[10px] text-white/25">
+                  {wordCount} {wordCount === 1 ? "word" : "words"}
+                </span>
+              )}
             </div>
 
             <div className="flex items-center gap-0.5">
@@ -183,6 +212,15 @@ export default function NoteCard({
                 </>
               ) : (
                 <>
+                  {onExport && !note.isLocked && (
+                    <IconBtn
+                      label="Export note"
+                      onClick={() => onExport(note.id, "md")}
+                      className="text-white/20 hover:text-green-400 hover:bg-green-500/10"
+                    >
+                      <Download size={13} />
+                    </IconBtn>
+                  )}
                   {onDuplicate && !note.isLocked && (
                     <IconBtn
                       label="Duplicate note"

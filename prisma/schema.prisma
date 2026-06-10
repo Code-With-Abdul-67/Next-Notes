@@ -52,6 +52,7 @@ model Note {
   content       String   @db.Text
   encryptedData String?  @db.Text
   color         String?  // Optional color accent: "red" | "blue" | "green" | "yellow" | "purple" | null
+  tags          String   @default("")  // Comma-separated tag list e.g. "work,personal"
   isPinned      Boolean  @default(false)
   isLocked      Boolean  @default(false)
   isDeleted     Boolean  @default(false)

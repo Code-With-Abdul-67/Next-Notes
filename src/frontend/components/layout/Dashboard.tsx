@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { Input } from "@nextui-org/react";
 import CustomSpinner from "@/frontend/components/ui/CustomSpinner";
-import { Search, FileText, Trash2, Lock, Trash, Plus, LockKeyhole, ArrowUpDown, Keyboard } from "lucide-react";
+import { Search, FileText, Trash2, Lock, Trash, Plus, LockKeyhole, ArrowUpDown, Keyboard, Tag, X } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import Sidebar from "@/frontend/components/layout/Sidebar";
 import NoteCard from "@/frontend/components/notes/NoteCard";
@@ -26,6 +26,7 @@ interface Note {
   title: string;
   content: string;
   color?: NoteColor;
+  tags?: string;
   encryptedData?: string | null;
   isPinned: boolean;
   isLocked: boolean;
@@ -41,6 +42,8 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [activeTag, setActiveTag] = useState<string | null>(null);
+  const [vaultSearchQuery, setVaultSearchQuery] = useState("");
 
   useEffect(() => {
     const handler = setTimeout(() => setDebouncedQuery(searchQuery), 300);
@@ -78,7 +81,7 @@ export default function Dashboard() {
 
   const handleNewNote = useCallback(() => { setEditingNote(null); setEditorOpen(true); }, []);
 
-  // Keyboard shortcuts: Ctrl+N → new note, ? → shortcuts panel
+  // Keyboard shortcuts
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement)?.tagName;
@@ -87,12 +90,17 @@ export default function Dashboard() {
         e.preventDefault();
         handleNewNote();
       }
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === "V") {
+        e.preventDefault();
+        handleViewChange("vault");
+      }
       if (e.key === "?" && !isTyping) {
         setShortcutsOpen((v) => !v);
       }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [handleNewNote]);
 
   const userId = (session?.user as { id?: string })?.id as string | undefined;
@@ -103,9 +111,8 @@ export default function Dashboard() {
     const checkVault = async () => {
       try {
         const res = await fetch("/api/vault/status");
-        if (res.status === 401) return; // session not ready — retry on next userId change
+        if (res.status === 401) return;
         if (!res.ok) {
-          // Server error — mark checked with false so vault shows unlock (safer than setup)
           if (!cancelled) { setHasVaultPassword(false); setVaultChecked(true); }
           return;
         }
@@ -115,7 +122,6 @@ export default function Dashboard() {
           setVaultChecked(true);
         }
       } catch {
-        // Network error — don't mark as checked, will retry if userId changes
         if (!cancelled) { setHasVaultPassword(false); setVaultChecked(true); }
       }
     };
@@ -129,7 +135,10 @@ export default function Dashboard() {
       const params = new URLSearchParams();
       if (currentView === "bin") params.set("trash", "true");
       if (currentView === "vault") params.set("vault", "true");
-      if (debouncedQuery) params.set("search", debouncedQuery);
+      // Server-side search only for non-vault views
+      if (debouncedQuery && currentView !== "vault") params.set("search", debouncedQuery);
+      // Server-side tag filter for non-vault views
+      if (activeTag && currentView !== "vault") params.set("tag", activeTag);
 
       const res = await fetch(`/api/notes?${params.toString()}`);
       if (!res.ok) {
@@ -162,14 +171,14 @@ export default function Dashboard() {
       setLoading(false);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentView, debouncedQuery]);
+  }, [currentView, debouncedQuery, activeTag]);
 
   useEffect(() => {
     if (!userId) return;
     if (currentView === "vault" && !vaultUnlocked) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchNotes();
-  }, [userId, currentView, debouncedQuery, vaultUnlocked, fetchNotes]);
+  }, [userId, currentView, debouncedQuery, activeTag, vaultUnlocked, fetchNotes]);
 
   const handleSaveNote = async (
     id: string | null,
@@ -177,7 +186,8 @@ export default function Dashboard() {
     content: string,
     isPinned: boolean,
     isLocked: boolean,
-    color: NoteColor
+    color: NoteColor,
+    tags: string
   ) => {
     setIsSaving(true);
     try {
@@ -196,7 +206,7 @@ export default function Dashboard() {
         return;
       }
 
-      const payload = { title: storedTitle, content: storedContent, encryptedData, isPinned, isLocked, color };
+      const payload = { title: storedTitle, content: storedContent, encryptedData, isPinned, isLocked, color, tags };
       const res = await fetch(id ? `/api/notes/${id}` : "/api/notes", {
         method: id ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
@@ -371,6 +381,24 @@ export default function Dashboard() {
     if (currentView === "vault") setCurrentView("all");
   };
 
+  // Export note from card (quick export as .md)
+  const handleCardExport = (id: string, format: "md" | "txt") => {
+    const note = notes.find((n) => n.id === id);
+    if (!note) return;
+    const ext = format;
+    const body = format === "md"
+      ? `# ${note.title || "Untitled"}\n\n${note.content}`
+      : `${note.title || "Untitled"}\n${"=".repeat((note.title || "Untitled").length)}\n\n${note.content}`;
+    const blob = new Blob([body], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${(note.title || "note").replace(/[^a-z0-9]/gi, "_").toLowerCase()}.${ext}`;
+    a.click();
+    URL.revokeObjectURL(url);
+    addToast("success", `Exported as .${ext}`);
+  };
+
   // Vault auto-lock after 10 minutes of inactivity
   const inactivityTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const INACTIVITY_MS = 10 * 60 * 1000;
@@ -405,14 +433,32 @@ export default function Dashboard() {
     } catch { addToast("error", "Failed to duplicate note"); }
   };
 
-
-
-
   const handleEditNote = (note: Note) => { setEditingNote(note); setEditorOpen(true); };
   const handleViewChange = (view: "all" | "vault" | "bin") => {
     setCurrentView(view);
     setSearchQuery("");
+    setActiveTag(null);
+    setVaultSearchQuery("");
   };
+
+  // Collect all unique tags from current notes (for tag filter bar)
+  const allTags = Array.from(
+    new Set(
+      notes
+        .flatMap((n) => (n.tags ? n.tags.split(",").filter(Boolean) : []))
+    )
+  );
+
+  // Client-side vault search filter
+  const displayedNotes = currentView === "vault" && vaultSearchQuery
+    ? notes.filter((n) => {
+        const q = vaultSearchQuery.toLowerCase();
+        return (
+          n.title.toLowerCase().includes(q) ||
+          n.content.toLowerCase().includes(q)
+        );
+      })
+    : notes;
 
   const viewConfig = {
     all:   { title: "All Notes",    icon: FileText, iconColor: "text-blue-400",  emptyText: "No notes yet. Create your first note!" },
@@ -420,7 +466,7 @@ export default function Dashboard() {
     bin:   { title: "Recycle Bin",  icon: Trash2,   iconColor: "text-red-400",   emptyText: "Recycle bin is empty." },
   };
 
-  const sortedNotes = [...notes].sort((a, b) => {
+  const sortedNotes = [...displayedNotes].sort((a, b) => {
     if (sortOption === "title") return (a.title || "").localeCompare(b.title || "");
     if (sortOption === "created") return new Date(b.createdAt || b.updatedAt).getTime() - new Date(a.createdAt || a.updatedAt).getTime();
     return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
@@ -430,6 +476,12 @@ export default function Dashboard() {
   const unpinnedNotes = sortedNotes.filter((n) => !n.isPinned);
   const hasPinnedDivider = pinnedNotes.length > 0 && unpinnedNotes.length > 0 && currentView !== "bin";
   const ViewIcon = viewConfig[currentView].icon;
+
+  // Note counts for sidebar
+  const noteCounts = { all: 0, vault: 0, bin: 0 };
+  if (currentView === "all") noteCounts.all = notes.length;
+  else if (currentView === "vault") noteCounts.vault = notes.length;
+  else if (currentView === "bin") noteCounts.bin = notes.length;
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen">
@@ -441,6 +493,7 @@ export default function Dashboard() {
         onDeleteVault={handleDeleteVault}
         onDeleteAccount={handleDeleteAccount}
         user={{ name: session?.user?.name, email: session?.user?.email }}
+        noteCounts={noteCounts}
       />
 
       <main className="flex-1 flex flex-col min-h-screen">
@@ -451,7 +504,7 @@ export default function Dashboard() {
               <h1 className="text-xl font-bold text-white">{viewConfig[currentView].title}</h1>
               {!loading && (
                 <span className="text-xs px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-white/40 font-medium">
-                  {notes.length}
+                  {displayedNotes.length}
                 </span>
               )}
               {currentView === "vault" && vaultUnlocked && (
@@ -502,8 +555,6 @@ export default function Dashboard() {
                 </div>
               )}
 
-
-
               {/* Keyboard shortcuts button */}
               <button onClick={() => setShortcutsOpen(true)} title="Keyboard shortcuts (?)"
                 className="flex items-center justify-center w-10 h-10 rounded-xl text-white/30 bg-white/5 border border-white/10 hover:text-white hover:bg-white/10 transition-all duration-200 shrink-0">
@@ -511,15 +562,44 @@ export default function Dashboard() {
               </button>
 
               <div className="w-full sm:w-72">
+                {/* Normal search (non-vault) */}
                 {currentView !== "vault" && (
                   <Input placeholder="Search notes..." variant="flat" value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     startContent={<Search size={16} className="text-white/30" />}
                     classNames={{ inputWrapper: "glass-input h-10", input: "text-white text-sm placeholder:text-white/30" }} />
                 )}
+                {/* Vault search (client-side, only when unlocked) */}
+                {currentView === "vault" && vaultUnlocked && (
+                  <Input placeholder="Search vault..." variant="flat" value={vaultSearchQuery}
+                    onChange={(e) => setVaultSearchQuery(e.target.value)}
+                    startContent={<Search size={16} className="text-white/30" />}
+                    classNames={{ inputWrapper: "glass-input h-10", input: "text-white text-sm placeholder:text-white/30" }} />
+                )}
               </div>
             </div>
           </div>
+
+          {/* Tag filter bar — shown when tags exist in current view */}
+          {currentView !== "bin" && allTags.length > 0 && (
+            <div className="flex items-center gap-2 mt-3 overflow-x-auto pb-1 scrollbar-hide">
+              <Tag size={12} className="text-white/30 shrink-0" />
+              {allTags.map((tag) => (
+                <button
+                  key={tag}
+                  onClick={() => setActiveTag(activeTag === tag ? null : tag)}
+                  className={`shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium transition-all duration-200 border ${
+                    activeTag === tag
+                      ? "bg-purple-500/20 border-purple-500/40 text-purple-300"
+                      : "bg-white/5 border-white/10 text-white/40 hover:text-white/70 hover:bg-white/10"
+                  }`}
+                >
+                  #{tag}
+                  {activeTag === tag && <X size={10} className="ml-0.5" />}
+                </button>
+              ))}
+            </div>
+          )}
         </header>
 
         <div className="flex-1 p-6 overflow-y-auto">
@@ -535,10 +615,14 @@ export default function Dashboard() {
                 <div className="flex items-center justify-center h-64"><CustomSpinner size={48} /></div>
               ) : loading ? (
                 <div className="flex items-center justify-center h-64"><CustomSpinner size={48} /></div>
-              ) : notes.length === 0 ? (
+              ) : sortedNotes.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-64 text-center p-4 gap-4">
-                  <p className="text-white/40 text-sm max-w-sm">{viewConfig[currentView].emptyText}</p>
-                  {(currentView === "all" || currentView === "vault") && (
+                  <p className="text-white/40 text-sm max-w-sm">
+                    {activeTag ? `No notes tagged with #${activeTag}.` :
+                     vaultSearchQuery ? "No vault notes match your search." :
+                     viewConfig[currentView].emptyText}
+                  </p>
+                  {(currentView === "all" || currentView === "vault") && !activeTag && !vaultSearchQuery && (
                     <button onClick={handleNewNote}
                       className="md:hidden btn-sheen flex items-center gap-2 px-5 h-10 rounded-xl bg-primary text-white text-sm font-semibold shadow-lg shadow-purple-500/20">
                       <Plus size={16} />
@@ -555,7 +639,7 @@ export default function Dashboard() {
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                           {pinnedNotes.map((note) => (
                             <motion.div key={note.id} layout initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.2 }}>
-                              <NoteCard note={note} view={currentView} onEdit={handleEditNote} onPinToggle={handlePinToggle} onLockToggle={handleLockToggle} onDeleteToggle={handleDeleteToggle} onDeletePermanent={handleDeletePermanent} onDuplicate={handleDuplicate} />
+                              <NoteCard note={note} view={currentView} onEdit={handleEditNote} onPinToggle={handlePinToggle} onLockToggle={handleLockToggle} onDeleteToggle={handleDeleteToggle} onDeletePermanent={handleDeletePermanent} onDuplicate={handleDuplicate} onExport={handleCardExport} />
                             </motion.div>
                           ))}
                         </div>
@@ -567,7 +651,7 @@ export default function Dashboard() {
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                           {unpinnedNotes.map((note) => (
                             <motion.div key={note.id} layout initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.2 }}>
-                              <NoteCard note={note} view={currentView} onEdit={handleEditNote} onPinToggle={handlePinToggle} onLockToggle={handleLockToggle} onDeleteToggle={handleDeleteToggle} onDeletePermanent={handleDeletePermanent} onDuplicate={handleDuplicate} />
+                              <NoteCard note={note} view={currentView} onEdit={handleEditNote} onPinToggle={handlePinToggle} onLockToggle={handleLockToggle} onDeleteToggle={handleDeleteToggle} onDeletePermanent={handleDeletePermanent} onDuplicate={handleDuplicate} onExport={handleCardExport} />
                             </motion.div>
                           ))}
                         </div>
@@ -577,7 +661,7 @@ export default function Dashboard() {
                       <div key="flat-grid" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                         {sortedNotes.map((note) => (
                           <motion.div key={note.id} layout initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.2 }}>
-                            <NoteCard note={note} view={currentView} onEdit={handleEditNote} onPinToggle={handlePinToggle} onLockToggle={handleLockToggle} onDeleteToggle={handleDeleteToggle} onDeletePermanent={handleDeletePermanent} onDuplicate={handleDuplicate} />
+                            <NoteCard note={note} view={currentView} onEdit={handleEditNote} onPinToggle={handlePinToggle} onLockToggle={handleLockToggle} onDeleteToggle={handleDeleteToggle} onDeletePermanent={handleDeletePermanent} onDuplicate={handleDuplicate} onExport={handleCardExport} />
                           </motion.div>
                         ))}
                       </div>

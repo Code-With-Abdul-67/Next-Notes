@@ -40,6 +40,9 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
     const color = body.color !== undefined
       ? (typeof body.color === "string" && VALID_COLORS.has(body.color) ? body.color : null)
       : note.color;
+    const tags = typeof body.tags === "string"
+      ? body.tags.slice(0, 500)
+      : note.tags;
 
     const updatedNote = await prisma.note.update({
       where: { id },
@@ -53,6 +56,7 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
         isDeleted: isDeleted !== undefined ? isDeleted === true : note.isDeleted,
         isLocked: isLocked !== undefined ? isLocked === true : note.isLocked,
         color,
+        tags: body.tags !== undefined ? tags : note.tags,
       },
     });
 

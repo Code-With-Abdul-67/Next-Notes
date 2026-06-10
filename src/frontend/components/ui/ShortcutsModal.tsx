@@ -10,10 +10,11 @@ interface ShortcutsModalProps {
 }
 
 const SHORTCUTS = [
-  { keys: ["Ctrl", "N"],   mac: ["⌘", "N"],   label: "New note" },
-  { keys: ["Ctrl", "S"],   mac: ["⌘", "S"],   label: "Save note (in editor)" },
-  { keys: ["Escape"],      mac: ["Esc"],       label: "Close modal / editor" },
-  { keys: ["?"],           mac: ["?"],         label: "Show keyboard shortcuts" },
+  { keys: ["Ctrl", "N"],         mac: ["⌘", "N"],         label: "New note" },
+  { keys: ["Ctrl", "S"],         mac: ["⌘", "S"],         label: "Save note (in editor)" },
+  { keys: ["Ctrl", "Shift", "V"],mac: ["⌘", "⇧", "V"],   label: "Open Secret Vault" },
+  { keys: ["Escape"],            mac: ["Esc"],             label: "Close modal / editor" },
+  { keys: ["?"],                 mac: ["?"],               label: "Show keyboard shortcuts" },
 ];
 
 function Kbd({ children }: { children: string }) {

@@ -19,6 +19,7 @@ interface SidebarProps {
   hasVaultPassword: boolean;
   onDeleteVault: () => void;
   onDeleteAccount?: () => void;
+  noteCounts?: { all: number; vault: number; bin: number };
 }
 
 const NAV_ITEMS = [
@@ -77,6 +78,7 @@ interface SidebarContentProps {
   onDeleteVault: () => void;
   onDeleteAccount?: () => void;
   onLogout: () => void;
+  noteCounts?: { all: number; vault: number; bin: number };
 }
 
 function SidebarContent({
@@ -89,6 +91,7 @@ function SidebarContent({
   onDeleteVault,
   onDeleteAccount,
   onLogout,
+  noteCounts,
 }: SidebarContentProps) {
   const initials = (user.name || "U")
     .split(" ")
@@ -149,6 +152,13 @@ function SidebarContent({
                 <div className="relative z-10 flex items-center gap-3 w-full">
                   <Icon size={18} className={isActive ? item.iconActive : ""} />
                   {!isCollapsed && <span>{item.label}</span>}
+                  {!isCollapsed && noteCounts && noteCounts[item.id] > 0 && (
+                    <span className={`ml-auto text-[10px] font-semibold px-1.5 py-0.5 rounded-full min-w-[18px] text-center ${
+                      isActive ? "bg-white/15 text-white/80" : "bg-white/8 text-white/35"
+                    }`}>
+                      {noteCounts[item.id]}
+                    </span>
+                  )}
                 </div>
               </button>
             );
@@ -223,6 +233,7 @@ export default function Sidebar({
   hasVaultPassword,
   onDeleteVault,
   onDeleteAccount,
+  noteCounts,
 }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -247,6 +258,7 @@ export default function Sidebar({
     onDeleteVault,
     onDeleteAccount,
     onLogout: () => setLogoutConfirmOpen(true),
+    noteCounts,
   };
 
   return (
