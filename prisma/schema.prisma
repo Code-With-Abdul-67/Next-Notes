@@ -41,9 +41,11 @@ model User {
   emailVerified DateTime?
   image         String?
   vaultPassword String?   // Hashed master password
+  themeConfig   String?   @db.Text // JSON string for Discord Nitro-style custom theme settings
   accounts      Account[]
   sessions      Session[]
   notes         Note[]
+  todos         Todo[]
 }
 
 model Note {
@@ -62,6 +64,21 @@ model Note {
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+model Todo {
+  id          String    @id @default(cuid())
+  title       String
+  description String?   @db.Text
+  isCompleted Boolean   @default(false)
+  priority    String    @default("medium") // low, medium, high, urgent
+  dueDate     DateTime?
+  tags        String    @default("")
+  order       Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
 model VerificationCode {
   id        String   @id @default(cuid())
   email     String   @unique
@@ -69,3 +86,4 @@ model VerificationCode {
   expiresAt DateTime
   createdAt DateTime @default(now())
 }
+

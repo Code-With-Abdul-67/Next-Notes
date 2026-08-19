@@ -2,13 +2,17 @@
 
 import { NextUIProvider } from "@nextui-org/react";
 import { SessionProvider } from "next-auth/react";
+import { ThemeProvider } from "@/frontend/context/ThemeContext";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SessionProvider refetchOnWindowFocus={false}>
-      <NextUIProvider className="dark text-foreground bg-background min-h-screen">
-        {children}
-      </NextUIProvider>
+      <ThemeProvider>
+        <NextUIProvider className="dark text-foreground bg-transparent min-h-screen">
+          {children}
+        </NextUIProvider>
+      </ThemeProvider>
     </SessionProvider>
   );
 }
+

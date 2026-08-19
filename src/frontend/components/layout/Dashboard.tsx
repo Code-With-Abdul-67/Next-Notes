@@ -2,9 +2,10 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSession, signOut } from "next-auth/react";
+
 import { Input } from "@nextui-org/react";
 import CustomSpinner from "@/frontend/components/ui/CustomSpinner";
-import { Search, FileText, Trash2, Lock, Trash, Plus, LockKeyhole, ArrowUpDown, Keyboard, Tag, X } from "lucide-react";
+import { Search, FileText, Trash2, Lock, Trash, Plus, LockKeyhole, ArrowUpDown, Keyboard, Tag, X, LayoutGrid, Columns3, CheckSquare, User, LogOut, Sparkles } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import Sidebar from "@/frontend/components/layout/Sidebar";
 import NoteCard from "@/frontend/components/notes/NoteCard";
@@ -18,6 +19,9 @@ import Toast, { useToast } from "@/frontend/components/ui/Toast";
 import SessionGuard from "@/frontend/components/layout/SessionGuard";
 import ShortcutsModal from "@/frontend/components/ui/ShortcutsModal";
 import CommandPalette from "@/frontend/components/ui/CommandPalette";
+import KanbanBoard from "@/frontend/components/notes/KanbanBoard";
+import SettingsModal from "@/frontend/components/ui/SettingsModal";
+import TodoList from "@/frontend/components/todos/TodoList";
 import { encryptNote, decryptNote } from "@/frontend/lib/crypto";
 
 type SortOption = "updated" | "created" | "title";
@@ -37,14 +41,23 @@ interface Note {
 }
 
 export default function Dashboard() {
-  const { data: session } = useSession();
-  const [currentView, setCurrentView] = useState<"all" | "vault" | "bin">("all");
+  const { data: session, update: updateSession } = useSession();
+  const [currentView, setCurrentView] = useState<"all" | "vault" | "bin" | "todos">("all");
   const [notes, setNotes] = useState<Note[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [activeTag, setActiveTag] = useState<string | null>(null);
   const [vaultSearchQuery, setVaultSearchQuery] = useState("");
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [userName, setUserName] = useState<string>("");
+
+  useEffect(() => {
+    if (session?.user?.name) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setUserName(session.user.name);
+    }
+  }, [session?.user?.name]);
 
   useEffect(() => {
     const handler = setTimeout(() => setDebouncedQuery(searchQuery), 300);
@@ -55,6 +68,7 @@ export default function Dashboard() {
   const [editingNote, setEditingNote] = useState<Note | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
+
 
   // Vault
   const [vaultUnlocked, setVaultUnlocked] = useState(false);
@@ -80,6 +94,7 @@ export default function Dashboard() {
   const [sortOption, setSortOption] = useState<SortOption>("updated");
   const [showSortMenu, setShowSortMenu] = useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<"grid" | "kanban">("grid");
 
   const handleNewNote = useCallback(() => { setEditingNote(null); setEditorOpen(true); }, []);
 
@@ -96,6 +111,10 @@ export default function Dashboard() {
         e.preventDefault();
         setIsCommandPaletteOpen(true);
       }
+      if ((e.ctrlKey || e.metaKey) && e.key === ",") {
+        e.preventDefault();
+        setIsSettingsOpen(true);
+      }
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === "V") {
         e.preventDefault();
         handleViewChange("vault");
@@ -106,8 +125,8 @@ export default function Dashboard() {
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [handleNewNote]);
+
 
   const userId = (session?.user as { id?: string })?.id as string | undefined;
 
@@ -440,12 +459,26 @@ export default function Dashboard() {
   };
 
   const handleEditNote = (note: Note) => { setEditingNote(note); setEditorOpen(true); };
-  function handleViewChange(view: "all" | "vault" | "bin") {
+  function handleViewChange(view: "all" | "vault" | "bin" | "todos") {
     setCurrentView(view);
     setSearchQuery("");
     setActiveTag(null);
     setVaultSearchQuery("");
   }
+
+  const handleUpdateNoteTags = async (noteId: string, newTags: string) => {
+    try {
+      const res = await fetch(`/api/notes/${noteId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tags: newTags }),
+      });
+      if (!res.ok) { addToast("error", "Failed to move note"); return; }
+      fetchNotes();
+    } catch {
+      addToast("error", "Failed to move note");
+    }
+  };
 
   // Collect all unique tags from current notes (for tag filter bar)
   const allTags = Array.from(
@@ -467,9 +500,10 @@ export default function Dashboard() {
     : notes;
 
   const viewConfig = {
-    all:   { title: "All Notes",    icon: FileText, iconColor: "text-blue-400",  emptyText: "No notes yet. Create your first note!" },
-    vault: { title: "Secret Vault", icon: Lock,     iconColor: "text-amber-400", emptyText: "Your vault is empty. Lock notes to keep them private." },
-    bin:   { title: "Recycle Bin",  icon: Trash2,   iconColor: "text-red-400",   emptyText: "Recycle bin is empty." },
+    all:   { title: "All Notes",    icon: FileText,    iconColor: "text-blue-400",    emptyText: "No notes yet. Create your first note!" },
+    todos: { title: "To-Do Lists",  icon: CheckSquare, iconColor: "text-emerald-400", emptyText: "No tasks found." },
+    vault: { title: "Secret Vault", icon: Lock,        iconColor: "text-amber-400",   emptyText: "Your vault is empty. Lock notes to keep them private." },
+    bin:   { title: "Recycle Bin",  icon: Trash2,      iconColor: "text-red-400",     emptyText: "Recycle bin is empty." },
   };
 
   const sortedNotes = [...displayedNotes].sort((a, b) => {
@@ -484,7 +518,7 @@ export default function Dashboard() {
   const ViewIcon = viewConfig[currentView].icon;
 
   // Note counts for sidebar
-  const noteCounts = { all: 0, vault: 0, bin: 0 };
+  const noteCounts: { all: number; vault: number; bin: number; todos?: number } = { all: 0, vault: 0, bin: 0 };
   if (currentView === "all") noteCounts.all = notes.length;
   else if (currentView === "vault") noteCounts.vault = notes.length;
   else if (currentView === "bin") noteCounts.bin = notes.length;
@@ -495,12 +529,14 @@ export default function Dashboard() {
         currentView={currentView}
         onViewChange={handleViewChange}
         onNewNote={handleNewNote}
+        onOpenSettings={() => setIsSettingsOpen(true)}
         hasVaultPassword={hasVaultPassword}
         onDeleteVault={handleDeleteVault}
         onDeleteAccount={handleDeleteAccount}
-        user={{ name: session?.user?.name, email: session?.user?.email }}
+        user={{ name: userName || session?.user?.name, email: session?.user?.email }}
         noteCounts={noteCounts}
       />
+
 
       <main className="flex-1 flex flex-col min-h-screen">
         <header className="sticky top-0 z-20 px-6 py-4 border-b border-white/5 bg-black/20 backdrop-blur-lg">
@@ -561,6 +597,45 @@ export default function Dashboard() {
                 </div>
               )}
 
+              {/* View Mode Toggle (Grid/Kanban) — only in All Notes view */}
+              {currentView === "all" && (
+                <div className="flex items-center h-10 rounded-xl bg-white/5 border border-white/10 overflow-hidden shrink-0">
+                  <button
+                    onClick={() => setViewMode("grid")}
+                    title="Grid View"
+                    className={`flex items-center justify-center w-10 h-full transition-all duration-200 ${
+                      viewMode === "grid"
+                        ? "bg-purple-500/20 text-purple-400"
+                        : "text-white/30 hover:text-white/60 hover:bg-white/5"
+                    }`}
+                  >
+                    <LayoutGrid size={15} />
+                  </button>
+                  <div className="w-px h-5 bg-white/10" />
+                  <button
+                    onClick={() => setViewMode("kanban")}
+                    title="Kanban Board"
+                    className={`flex items-center justify-center w-10 h-full transition-all duration-200 ${
+                      viewMode === "kanban"
+                        ? "bg-purple-500/20 text-purple-400"
+                        : "text-white/30 hover:text-white/60 hover:bg-white/5"
+                    }`}
+                  >
+                    <Columns3 size={15} />
+                  </button>
+                </div>
+              )}
+
+              {/* Command Palette trigger */}
+              <button onClick={() => setIsCommandPaletteOpen(true)} title="Command Palette (Ctrl+K)"
+                className="flex items-center gap-2 px-3 h-10 rounded-xl text-white/30 bg-white/[0.03] border border-white/[0.06] hover:text-white/60 hover:bg-white/[0.06] hover:border-purple-500/20 transition-all duration-200 shrink-0 group">
+                <Search size={14} className="text-white/25 group-hover:text-purple-400/60 transition-colors" />
+                <span className="hidden sm:inline text-xs text-white/20 group-hover:text-white/40 transition-colors">Command...</span>
+                <kbd className="hidden sm:flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-medium text-white/20 bg-white/[0.04] border border-white/[0.06] ml-1">
+                  Ctrl K
+                </kbd>
+              </button>
+
               {/* Keyboard shortcuts button */}
               <button onClick={() => setShortcutsOpen(true)} title="Keyboard shortcuts (?)"
                 className="flex items-center justify-center w-10 h-10 rounded-xl text-white/30 bg-white/5 border border-white/10 hover:text-white hover:bg-white/10 transition-all duration-200 shrink-0">
@@ -611,7 +686,9 @@ export default function Dashboard() {
         <div className="flex-1 p-6 overflow-y-auto">
           <AnimatePresence mode="wait">
             <motion.div key={currentView} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }} className="w-full h-full">
-              {currentView === "vault" && !vaultUnlocked && vaultChecked ? (
+              {currentView === "todos" ? (
+                <TodoList onNotify={(msg, type) => addToast(type === "error" ? "error" : "vault", msg)} />
+              ) : currentView === "vault" && !vaultUnlocked && vaultChecked ? (
                 <VaultLock
                   onUnlock={(pwd) => { setVaultPasswordSync(pwd); setVaultUnlocked(true); }}
                   hasVaultPassword={hasVaultPassword}
@@ -636,6 +713,13 @@ export default function Dashboard() {
                     </button>
                   )}
                 </div>
+              ) : currentView === "all" && viewMode === "kanban" ? (
+                <KanbanBoard
+                  notes={sortedNotes}
+                  onEditNote={handleEditNote}
+                  onNewNote={handleNewNote}
+                  onUpdateNoteTags={handleUpdateNoteTags}
+                />
               ) : (
                 <div className="space-y-6">
                   <AnimatePresence mode="popLayout">
@@ -678,6 +762,7 @@ export default function Dashboard() {
             </motion.div>
           </AnimatePresence>
         </div>
+
       </main>
 
       <NoteEditorModal
@@ -797,10 +882,26 @@ export default function Dashboard() {
         onClose={() => setIsCommandPaletteOpen(false)}
         onNewNote={handleNewNote}
         onNavigate={handleViewChange}
+        onOpenSettings={() => setIsSettingsOpen(true)}
         onLogout={() => signOut()}
+      />
+      <SettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        user={{ name: userName || session?.user?.name, email: session?.user?.email }}
+        hasVaultPassword={hasVaultPassword}
+        onDeleteVault={() => setConfirmAction({ type: "deleteVault", id: "" })}
+        onDeleteAccount={() => setConfirmAction({ type: "deleteAccount", id: "" })}
+        onUpdateUserName={(newName) => {
+          setUserName(newName);
+          if (updateSession) {
+            updateSession({ name: newName });
+          }
+        }}
       />
       <Toast toasts={toasts} onRemove={removeToast} />
       <SessionGuard />
     </div>
   );
+
 }
