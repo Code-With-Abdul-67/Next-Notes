@@ -10,6 +10,12 @@ import {
   AlertCircle,
   MoreVertical,
   Edit2,
+  AlertOctagon,
+  ArrowUp,
+  Minus,
+  ArrowDown,
+  Clock,
+  XCircle,
 } from "lucide-react";
 import {
   Dropdown,
@@ -43,22 +49,22 @@ const PRIORITY_CONFIG = {
   urgent: {
     label: "Urgent",
     badge: "bg-red-500/20 text-red-300 border-red-500/30",
-    dot: "bg-red-500",
+    icon: AlertOctagon,
   },
   high: {
     label: "High",
     badge: "bg-amber-500/20 text-amber-300 border-amber-500/30",
-    dot: "bg-amber-500",
+    icon: ArrowUp,
   },
   medium: {
     label: "Medium",
     badge: "bg-blue-500/20 text-blue-300 border-blue-500/30",
-    dot: "bg-blue-500",
+    icon: Minus,
   },
   low: {
     label: "Low",
     badge: "bg-zinc-500/20 text-zinc-300 border-zinc-500/30",
-    dot: "bg-zinc-400",
+    icon: ArrowDown,
   },
 };
 
@@ -227,12 +233,31 @@ export default function TodoCard({ todo, onToggle, onDelete, onUpdate }: TodoCar
       </div>
 
       {/* Badges and metadata footer */}
-      <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-white/[0.04] text-[11px]">
+      <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-white/[0.04] text-[11px]">
+        {/* Status Badge */}
+        <span
+          className={`px-2 py-0.5 rounded-md text-[10px] font-semibold border flex items-center gap-1 ${
+            todo.isCompleted
+              ? "bg-green-500/20 text-green-300 border-green-500/30"
+              : isOverdue
+              ? "bg-red-500/20 text-red-300 border-red-500/30"
+              : "bg-purple-500/20 text-purple-300 border-purple-500/30"
+          }`}
+        >
+          {todo.isCompleted ? (
+            <><Check size={11} /> Done</>
+          ) : isOverdue ? (
+            <><XCircle size={11} /> Overdue</>
+          ) : (
+            <><Clock size={11} /> Pending</>
+          )}
+        </span>
+
         {/* Priority Badge */}
         <span
           className={`px-2 py-0.5 rounded-md text-[10px] font-semibold border flex items-center gap-1.5 ${priority.badge}`}
         >
-          <span className={`w-1.5 h-1.5 rounded-full ${priority.dot}`} />
+          <priority.icon size={11} />
           {priority.label}
         </span>
 

@@ -5,7 +5,7 @@ import { useSession, signOut } from "next-auth/react";
 
 import { Input } from "@nextui-org/react";
 import CustomSpinner from "@/frontend/components/ui/CustomSpinner";
-import { Search, FileText, Trash2, Lock, Trash, Plus, LockKeyhole, ArrowUpDown, Keyboard, Tag, X, LayoutGrid, Columns3, CheckSquare, User, LogOut, Sparkles } from "lucide-react";
+import { Search, FileText, Trash2, Lock, Trash, Plus, LockKeyhole, ArrowUpDown, Keyboard, Tag, X, LayoutGrid, CheckSquare, User, LogOut, Sparkles } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import Sidebar from "@/frontend/components/layout/Sidebar";
 import NoteCard from "@/frontend/components/notes/NoteCard";
@@ -19,7 +19,7 @@ import Toast, { useToast } from "@/frontend/components/ui/Toast";
 import SessionGuard from "@/frontend/components/layout/SessionGuard";
 import ShortcutsModal from "@/frontend/components/ui/ShortcutsModal";
 import CommandPalette from "@/frontend/components/ui/CommandPalette";
-import KanbanBoard from "@/frontend/components/notes/KanbanBoard";
+
 import SettingsModal from "@/frontend/components/ui/SettingsModal";
 import TodoList from "@/frontend/components/todos/TodoList";
 import { encryptNote, decryptNote } from "@/frontend/lib/crypto";
@@ -597,35 +597,6 @@ export default function Dashboard() {
                 </div>
               )}
 
-              {/* View Mode Toggle (Grid/Kanban) — only in All Notes view */}
-              {currentView === "all" && (
-                <div className="flex items-center h-10 rounded-xl bg-white/5 border border-white/10 overflow-hidden shrink-0">
-                  <button
-                    onClick={() => setViewMode("grid")}
-                    title="Grid View"
-                    className={`flex items-center justify-center w-10 h-full transition-all duration-200 ${
-                      viewMode === "grid"
-                        ? "bg-purple-500/20 text-purple-400"
-                        : "text-white/30 hover:text-white/60 hover:bg-white/5"
-                    }`}
-                  >
-                    <LayoutGrid size={15} />
-                  </button>
-                  <div className="w-px h-5 bg-white/10" />
-                  <button
-                    onClick={() => setViewMode("kanban")}
-                    title="Kanban Board"
-                    className={`flex items-center justify-center w-10 h-full transition-all duration-200 ${
-                      viewMode === "kanban"
-                        ? "bg-purple-500/20 text-purple-400"
-                        : "text-white/30 hover:text-white/60 hover:bg-white/5"
-                    }`}
-                  >
-                    <Columns3 size={15} />
-                  </button>
-                </div>
-              )}
-
               {/* Command Palette trigger */}
               <button onClick={() => setIsCommandPaletteOpen(true)} title="Command Palette (Ctrl+K)"
                 className="flex items-center gap-2 px-3 h-10 rounded-xl text-white/30 bg-white/[0.03] border border-white/[0.06] hover:text-white/60 hover:bg-white/[0.06] hover:border-purple-500/20 transition-all duration-200 shrink-0 group">
@@ -713,13 +684,6 @@ export default function Dashboard() {
                     </button>
                   )}
                 </div>
-              ) : currentView === "all" && viewMode === "kanban" ? (
-                <KanbanBoard
-                  notes={sortedNotes}
-                  onEditNote={handleEditNote}
-                  onNewNote={handleNewNote}
-                  onUpdateNoteTags={handleUpdateNoteTags}
-                />
               ) : (
                 <div className="space-y-6">
                   <AnimatePresence mode="popLayout">

@@ -180,7 +180,7 @@ function SidebarContent({
         </nav>
       </div>
 
-      {/* User profile dropdown & Settings trigger */}
+      {/* Settings trigger */}
       <div className="border-t border-white/5 pt-4 space-y-2">
         <button
           onClick={onOpenSettings}
@@ -192,65 +192,6 @@ function SidebarContent({
           <Settings size={16} className="text-purple-400 shrink-0" />
           {!isCollapsed && <span>Settings & Themes</span>}
         </button>
-
-        <Dropdown placement="top-start" className="bg-zinc-950/95 backdrop-blur-md border border-white/10 text-white rounded-xl">
-          <DropdownTrigger>
-            <div className="w-full cursor-pointer hover:bg-white/5 transition-colors p-1.5 rounded-xl flex items-center justify-center">
-              {!isCollapsed ? (
-                <div className="flex items-center gap-3 w-full px-1">
-                  <div className="w-8 h-8 text-xs rounded-full bg-gradient-to-tr from-purple-600 to-indigo-600 border border-purple-500/30 flex items-center justify-center font-bold text-white shrink-0">
-                    {initials}
-                  </div>
-                  <div className="flex flex-col min-w-0">
-                    <span className="text-white/90 text-sm font-semibold truncate">{user.name || "User"}</span>
-                    <span className="text-white/40 text-xs truncate max-w-[140px]">{user.email || ""}</span>
-                  </div>
-                </div>
-              ) : (
-                <div className="w-8 h-8 text-xs rounded-full bg-gradient-to-tr from-purple-600 to-indigo-600 border border-purple-500/30 flex items-center justify-center font-bold text-white shrink-0">
-                  {initials}
-                </div>
-              )}
-            </div>
-          </DropdownTrigger>
-
-          <DropdownMenu aria-label="User actions" variant="flat">
-            <DropdownItem
-              key="settings"
-              startContent={<Settings size={16} />}
-              onPress={onOpenSettings}
-              className="text-white/80 font-medium data-[hover=true]:bg-white/10 data-[hover=true]:text-white"
-            >
-              App Settings
-            </DropdownItem>
-            <DropdownItem
-              key="logout"
-              startContent={<LogOut size={16} />}
-              onPress={onLogout}
-              className="text-white/70 font-medium data-[hover=true]:bg-white/10 data-[hover=true]:text-white"
-            >
-              Logout
-            </DropdownItem>
-            {hasVaultPassword ? (
-              <DropdownItem
-                key="delete-vault"
-                className="text-amber-400 font-medium data-[hover=true]:bg-amber-500/15 data-[hover=true]:text-amber-300"
-                startContent={<AlertTriangle size={16} />}
-                onPress={onDeleteVault}
-              >
-                Delete Vault
-              </DropdownItem>
-            ) : null}
-            <DropdownItem
-              key="delete-account"
-              className="text-red-400 font-medium data-[hover=true]:bg-red-500/15 data-[hover=true]:text-red-300"
-              startContent={<UserX size={16} />}
-              onPress={onDeleteAccount}
-            >
-              Delete Account
-            </DropdownItem>
-          </DropdownMenu>
-        </Dropdown>
       </div>
     </div>
   );
