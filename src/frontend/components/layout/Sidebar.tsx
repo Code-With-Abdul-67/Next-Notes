@@ -304,17 +304,18 @@ export default function Sidebar({
         <motion.aside
           initial={false}
           animate={{ width: isCollapsed ? 80 : 256 }}
-          style={{ overflow: "hidden" }}
           className="flex flex-col border-r border-white/5 h-screen sticky top-0 z-30 bg-black/20 backdrop-blur-md"
         >
-          <div className="relative h-full flex flex-col">
+          <div className="relative h-full w-full">
             <button
               onClick={() => setIsCollapsed(!isCollapsed)}
               className="absolute -right-3 top-10 w-6 h-6 rounded-full bg-purple-900 border border-white/10 hover:border-purple-500/50 flex items-center justify-center text-white/80 hover:text-white transition-all z-50 cursor-pointer"
             >
               {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
             </button>
-            <SidebarContent {...sharedContentProps} />
+            <div className="h-full w-full overflow-hidden">
+              <SidebarContent {...sharedContentProps} />
+            </div>
           </div>
         </motion.aside>
       )}
