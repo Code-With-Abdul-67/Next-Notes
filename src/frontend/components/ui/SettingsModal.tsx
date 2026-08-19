@@ -156,13 +156,13 @@ export default function SettingsModal({
                   tab: "h-9 text-xs font-semibold text-white/70 data-[selected=true]:text-white transition-all",
                 }}
               >
-                {/* ─── TAB 1: DISCORD NITRO THEMES ─────────────────────────────── */}
+                {/* ─── TAB 1: CUSTOM THEMES ─────────────────────────────── */}
                 <Tab
                   key="appearance"
                   title={
                     <div className="flex items-center gap-2">
                       <Sparkles size={14} className="text-amber-400" />
-                      <span>Theme & Nitro Styling</span>
+                      <span>Theme Styling</span>
                     </div>
                   }
                 >
@@ -173,10 +173,10 @@ export default function SettingsModal({
                         <div className="space-y-1 max-w-md">
                           <div className="flex items-center gap-2">
                             <span className="px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider rounded-md bg-gradient-to-r from-pink-500 to-purple-600 text-white shadow-sm flex items-center gap-1">
-                              <Flame size={12} /> Nitro Unlocked
+                              <Flame size={12} /> Custom Theme Styling
                             </span>
                             <h3 className="text-base font-bold text-white">
-                              Discord Nitro Themes
+                              Customize your own themes
                             </h3>
                           </div>
                           <p className="text-xs text-white/60 leading-relaxed">
@@ -199,7 +199,7 @@ export default function SettingsModal({
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
                         <h4 className="text-xs font-bold uppercase tracking-wider text-white/50">
-                          Nitro Preset Collection ({NITRO_THEMES.length})
+                          Themes Collection ({NITRO_THEMES.length})
                         </h4>
                         <span className="text-[11px] text-white/40 font-mono">
                           Live Active: <span className="text-purple-400 font-semibold">{currentTheme.name}</span>
@@ -216,11 +216,10 @@ export default function SettingsModal({
                               whileHover={{ scale: 1.02 }}
                               whileTap={{ scale: 0.98 }}
                               onClick={() => setTheme(theme.id)}
-                              className={`relative text-left p-3.5 rounded-2xl border transition-all flex flex-col justify-between h-28 overflow-hidden group ${
-                                isSelected
+                              className={`relative text-left p-3.5 rounded-2xl border transition-all flex flex-col justify-between h-28 overflow-hidden group ${isSelected
                                   ? "border-purple-500 ring-2 ring-purple-500/30 bg-purple-500/10 shadow-lg shadow-purple-500/10"
                                   : "border-white/10 hover:border-white/20 bg-white/[0.02] hover:bg-white/[0.04]"
-                              }`}
+                                }`}
                             >
                               {/* Background Gradient Preview swatch */}
                               <div
