@@ -3,8 +3,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/backend/lib/auth";
 import { prisma } from "@/backend/lib/prisma";
 
-// DELETE /api/notes/empty-bin — permanently delete all trashed notes for the user
-export async function DELETE(request: Request) {
+export async function DELETE() {
   const session = await getServerSession(authOptions);
   if (!session || !session.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

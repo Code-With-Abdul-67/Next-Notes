@@ -8,7 +8,7 @@ import { sendVaultResetEmail } from "@/backend/lib/email";
 const resetCooldown = new Map<string, number>();
 const COOLDOWN_MS = 60 * 1000; // 1 minute between requests
 
-export async function POST(_request: Request) {
+export async function POST() {
   const session = await getServerSession(authOptions);
   if (!session || !session.user || !session.user.email) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

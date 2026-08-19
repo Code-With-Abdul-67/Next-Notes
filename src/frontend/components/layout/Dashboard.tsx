@@ -17,6 +17,7 @@ import ConfirmationModal from "@/frontend/components/ui/ConfirmationModal";
 import Toast, { useToast } from "@/frontend/components/ui/Toast";
 import SessionGuard from "@/frontend/components/layout/SessionGuard";
 import ShortcutsModal from "@/frontend/components/ui/ShortcutsModal";
+import CommandPalette from "@/frontend/components/ui/CommandPalette";
 import { encryptNote, decryptNote } from "@/frontend/lib/crypto";
 
 type SortOption = "updated" | "created" | "title";
@@ -78,6 +79,7 @@ export default function Dashboard() {
   const [lockVaultConfirm, setLockVaultConfirm] = useState(false);
   const [sortOption, setSortOption] = useState<SortOption>("updated");
   const [showSortMenu, setShowSortMenu] = useState(false);
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
 
   const handleNewNote = useCallback(() => { setEditingNote(null); setEditorOpen(true); }, []);
 
@@ -89,6 +91,10 @@ export default function Dashboard() {
       if ((e.ctrlKey || e.metaKey) && e.key === "n") {
         e.preventDefault();
         handleNewNote();
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+        e.preventDefault();
+        setIsCommandPaletteOpen(true);
       }
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === "V") {
         e.preventDefault();
@@ -434,12 +440,12 @@ export default function Dashboard() {
   };
 
   const handleEditNote = (note: Note) => { setEditingNote(note); setEditorOpen(true); };
-  const handleViewChange = (view: "all" | "vault" | "bin") => {
+  function handleViewChange(view: "all" | "vault" | "bin") {
     setCurrentView(view);
     setSearchQuery("");
     setActiveTag(null);
     setVaultSearchQuery("");
-  };
+  }
 
   // Collect all unique tags from current notes (for tag filter bar)
   const allTags = Array.from(
@@ -786,6 +792,13 @@ export default function Dashboard() {
       />
 
       <ShortcutsModal isOpen={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
+      <CommandPalette 
+        isOpen={isCommandPaletteOpen}
+        onClose={() => setIsCommandPaletteOpen(false)}
+        onNewNote={handleNewNote}
+        onNavigate={handleViewChange}
+        onLogout={() => signOut()}
+      />
       <Toast toasts={toasts} onRemove={removeToast} />
       <SessionGuard />
     </div>

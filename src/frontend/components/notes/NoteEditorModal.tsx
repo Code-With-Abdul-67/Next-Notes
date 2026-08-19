@@ -162,8 +162,8 @@ export default function NoteEditorModal({
   const triggerAutoSave = useCallback(() => {
     if (isNewNote || !isOpen) return;
     if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
-    setAutoSaveStatus("saving");
     autoSaveTimer.current = setTimeout(async () => {
+      setAutoSaveStatus("saving");
       await onSave(note!.id, title, content, isPinned, isLocked, color, tags.join(","));
       setAutoSaveStatus("saved");
       setTimeout(() => setAutoSaveStatus("idle"), 2000);
@@ -199,13 +199,13 @@ export default function NoteEditorModal({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, title, content, isPinned, isLocked, color, tags]);
 
-  const handleSave = async () => {
+  async function handleSave() {
     if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
     if (draftTimer.current) clearTimeout(draftTimer.current);
     clearDraft();
     await onSave(note ? note.id : null, title, content, isPinned, isLocked, color, tags.join(","));
     onClose();
-  };
+  }
 
   const handleAddTag = (raw: string) => {
     const tag = raw.trim().toLowerCase().replace(/[^a-z0-9-_]/g, "").slice(0, 24);
