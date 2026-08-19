@@ -120,7 +120,10 @@ export default function KanbanBoard({ notes, onEditNote, onNewNote, onUpdateNote
     return `${days}d ago`;
   };
 
-  const allColumns = [...columns, { id: "uncategorized", title: "Uncategorized", color: "red", emoji: "📁" }];
+  const allColumns = [
+    { id: "uncategorized", title: "Uncategorized", color: "pink", emoji: "📥" },
+    ...columns
+  ];
 
   return (
     <div className="w-full h-full">
@@ -144,7 +147,7 @@ export default function KanbanBoard({ notes, onEditNote, onNewNote, onUpdateNote
 
       {/* Kanban Columns */}
       <DragDropContext onDragEnd={handleDragEnd}>
-        <div className="flex gap-4 overflow-x-auto pb-4 -mx-2 px-2"
+        <div className="flex gap-4 overflow-x-auto pb-4 -mx-2 px-2 snap-x snap-mandatory scroll-smooth"
           style={{ minHeight: "calc(100vh - 280px)" }}
         >
           {allColumns.map((column) => {
@@ -154,7 +157,7 @@ export default function KanbanBoard({ notes, onEditNote, onNewNote, onUpdateNote
             return (
               <div
                 key={column.id}
-                className="flex-shrink-0 w-72 flex flex-col rounded-2xl border border-white/[0.06] overflow-hidden"
+                className="flex-shrink-0 w-[85vw] sm:w-72 xl:flex-1 xl:min-w-[240px] max-w-sm flex flex-col rounded-2xl border border-white/[0.06] overflow-hidden snap-center"
                 style={{
                   background: "rgba(15, 10, 25, 0.3)",
                   backdropFilter: "blur(12px)",
@@ -185,7 +188,7 @@ export default function KanbanBoard({ notes, onEditNote, onNewNote, onUpdateNote
                       style={{ minHeight: 80 }}
                     >
                       {colNotes.length === 0 && !snapshot.isDraggingOver && (
-                        <div className="flex flex-col items-center justify-center py-8 text-white/15">
+                        <div className="flex flex-col items-center justify-center py-8 text-white/30">
                           <p className="text-xs">No notes</p>
                           <p className="text-[10px] mt-0.5">Drag here or tag with &quot;{column.id}&quot;</p>
                         </div>
