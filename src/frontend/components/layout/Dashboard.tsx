@@ -87,6 +87,8 @@ export default function Dashboard() {
 
   const { toasts, addToast, removeToast } = useToast();
 
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
+
   const [confirmAction, setConfirmAction] = useState<{
     type: "vault" | "unlock" | "bin" | "delete" | "deleteVault" | "deleteAccount" | "emptyBin";
     id: string;
@@ -997,7 +999,7 @@ export default function Dashboard() {
         onNewNote={handleNewNote}
         onNavigate={handleViewChange}
         onOpenSettings={() => setIsSettingsOpen(true)}
-        onLogout={() => signOut()}
+        onLogout={() => setLogoutConfirmOpen(true)}
       />
       <SettingsModal
         isOpen={isSettingsOpen}
@@ -1015,6 +1017,17 @@ export default function Dashboard() {
       />
       <Toast toasts={toasts} onRemove={removeToast} />
       <SessionGuard />
+
+      {/* Logout confirmation — glassy, non-destructive */}
+      <ConfirmationModal
+        isOpen={logoutConfirmOpen}
+        onClose={() => setLogoutConfirmOpen(false)}
+        onConfirm={() => signOut({ callbackUrl: "/" })}
+        title="Sign Out?"
+        message="You'll need to sign back in to access your notes and workspace."
+        confirmText="Sign Out"
+        isDestructive={false}
+      />
     </div>
   );
 
