@@ -246,9 +246,6 @@ export default function Sidebar({
           <span className="font-bold text-white">NEXT Notes</span>
         </div>
         <div className="flex items-center gap-1">
-          <button onClick={onOpenSettings} className="w-9 h-9 flex items-center justify-center rounded-xl text-white hover:bg-white/10 transition-colors">
-            <Settings size={20} />
-          </button>
           <button onClick={() => setMobileOpen(!mobileOpen)} className="w-9 h-9 flex items-center justify-center rounded-xl text-white hover:bg-white/10 transition-colors">
             <Menu size={20} />
           </button>
