@@ -22,6 +22,7 @@ import ShortcutsModal from "@/frontend/components/ui/ShortcutsModal";
 import CommandPalette from "@/frontend/components/ui/CommandPalette";
 
 import SettingsModal from "@/frontend/components/ui/SettingsModal";
+import DeleteAccountModal from "@/frontend/components/ui/DeleteAccountModal";
 import TodoList from "@/frontend/components/todos/TodoList";
 import { encryptNote, decryptNote } from "@/frontend/lib/crypto";
 
@@ -88,9 +89,10 @@ export default function Dashboard() {
   const { toasts, addToast, removeToast } = useToast();
 
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
+  const [deleteAccountModalOpen, setDeleteAccountModalOpen] = useState(false);
 
   const [confirmAction, setConfirmAction] = useState<{
-    type: "vault" | "unlock" | "bin" | "delete" | "deleteVault" | "deleteAccount" | "emptyBin";
+    type: "vault" | "unlock" | "bin" | "delete" | "deleteVault" | "emptyBin";
     id: string;
     currentVal?: boolean;
   } | null>(null);
@@ -452,7 +454,7 @@ export default function Dashboard() {
   };
 
   const handleDeleteVault = () => setConfirmAction({ type: "deleteVault", id: "" });
-  const handleDeleteAccount = () => setConfirmAction({ type: "deleteAccount", id: "" });
+  const handleDeleteAccount = () => setDeleteAccountModalOpen(true);
   const handleEmptyBin = () => setConfirmAction({ type: "emptyBin", id: "" });
 
   const handleLockVault = () => {
@@ -934,11 +936,6 @@ export default function Dashboard() {
                   else addToast("error", "Failed to delete vault");
                 }).catch(() => addToast("error", "Failed to delete vault"));
             }
-            else if (type === "deleteAccount") {
-              fetch("/api/user", { method: "DELETE" })
-                .then((res) => { if (res.ok) signOut({ callbackUrl: "/" }); else addToast("error", "Failed to delete account"); })
-                .catch(() => addToast("error", "Failed to delete account"));
-            }
             setConfirmAction(null);
           }}
           title={
@@ -947,7 +944,6 @@ export default function Dashboard() {
             confirmAction.type === "bin" ? "Move to Recycle Bin?" :
             confirmAction.type === "emptyBin" ? "Empty Recycle Bin?" :
             confirmAction.type === "deleteVault" ? "Delete Vault Permanently?" :
-            confirmAction.type === "deleteAccount" ? "Delete Account Permanently?" :
             "Delete Permanently?"
           }
           message={
@@ -956,7 +952,6 @@ export default function Dashboard() {
             confirmAction.type === "bin" ? "Move this note to the Recycle Bin? You can recover it later." :
             confirmAction.type === "emptyBin" ? "This will permanently delete all notes in the Recycle Bin. This cannot be undone." :
             confirmAction.type === "deleteVault" ? "This will permanently destroy your vault and all encrypted notes inside it. This cannot be undone." :
-            confirmAction.type === "deleteAccount" ? "This will permanently delete your account, all notes, and your vault. This cannot be undone." :
             "Permanently delete this note? This cannot be undone."
           }
           confirmText={
@@ -965,10 +960,9 @@ export default function Dashboard() {
             confirmAction.type === "bin" ? "Move" :
             confirmAction.type === "emptyBin" ? "Empty Bin" :
             confirmAction.type === "deleteVault" ? "Wipe Vault" :
-            confirmAction.type === "deleteAccount" ? "Delete Account" :
             "Delete"
           }
-          isDestructive={["delete", "emptyBin", "deleteVault", "deleteAccount"].includes(confirmAction.type)}
+          isDestructive={["delete", "emptyBin", "deleteVault"].includes(confirmAction.type)}
         />
       )}
 
@@ -1007,7 +1001,7 @@ export default function Dashboard() {
         user={{ name: userName || session?.user?.name, email: session?.user?.email }}
         hasVaultPassword={hasVaultPassword}
         onDeleteVault={() => setConfirmAction({ type: "deleteVault", id: "" })}
-        onDeleteAccount={() => setConfirmAction({ type: "deleteAccount", id: "" })}
+        onDeleteAccount={handleDeleteAccount}
         onUpdateUserName={(newName) => {
           setUserName(newName);
           if (updateSession) {
@@ -1027,6 +1021,13 @@ export default function Dashboard() {
         message="You'll need to sign back in to access your notes and workspace."
         confirmText="Sign Out"
         isDestructive={false}
+      />
+
+      {/* Account deletion — OTP + goodbye */}
+      <DeleteAccountModal
+        isOpen={deleteAccountModalOpen}
+        onClose={() => setDeleteAccountModalOpen(false)}
+        userEmail={session?.user?.email}
       />
     </div>
   );
