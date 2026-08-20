@@ -16,7 +16,6 @@ import {
   Button,
   Tabs,
   Tab,
-  Progress,
 } from "@nextui-org/react";
 import TodoCard, { TodoItem } from "./TodoCard";
 import CustomSpinner from "@/frontend/components/ui/CustomSpinner";
@@ -169,7 +168,6 @@ export default function TodoList({ onNotify }: TodoListProps) {
   const totalTasks = todos.length;
   const completedCount = todos.filter((t) => t.isCompleted).length;
   const pendingCount = totalTasks - completedCount;
-  const completionPercent = totalTasks > 0 ? Math.round((completedCount / totalTasks) * 100) : 0;
 
   // Filtered todos
   const filteredTodos = useMemo(() => {
@@ -217,34 +215,14 @@ export default function TodoList({ onNotify }: TodoListProps) {
           </div>
         </div>
 
-        {/* Progress summary widget */}
-        <div className="flex items-center gap-4 w-full md:w-auto bg-white/[0.02] p-3 rounded-2xl border border-white/5 z-10">
-          <div className="flex flex-col min-w-[120px]">
-            <div className="flex items-center justify-between text-xs mb-1">
-              <span className="text-white/60 font-medium">Progress</span>
-              <span className="font-bold text-purple-400">{completionPercent}%</span>
-            </div>
-            <Progress
-              value={completionPercent}
-              size="sm"
-              classNames={{
-                track: "bg-white/10",
-                indicator: "bg-gradient-to-r from-purple-600 to-indigo-500",
-              }}
-            />
-            <span className="text-[10px] text-white/40 mt-1">
-              {completedCount} of {totalTasks} tasks done
-            </span>
-          </div>
-
-          <Button
-            onPress={() => setIsAdding(true)}
-            className="bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-xl text-xs px-4 h-10 shadow-lg shadow-purple-600/30 shrink-0"
-            startContent={<Plus size={16} />}
-          >
-            Add Task
-          </Button>
-        </div>
+        {/* Add Task button */}
+        <Button
+          onPress={() => setIsAdding(true)}
+          className="bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-xl text-xs px-4 h-10 shadow-lg shadow-purple-600/30 shrink-0 z-10"
+          startContent={<Plus size={16} />}
+        >
+          Add Task
+        </Button>
       </div>
 
       {/* New Task Inline Creator Drawer / Card */}
