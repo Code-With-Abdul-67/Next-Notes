@@ -13,7 +13,7 @@ export async function GET() {
 
   try {
     const todos = await prisma.todo.findMany({
-      where: { userId },
+      where: { userId, isDeleted: false },
       orderBy: [{ isCompleted: "asc" }, { order: "asc" }, { createdAt: "desc" }],
     });
 

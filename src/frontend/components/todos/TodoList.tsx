@@ -11,11 +11,18 @@ import {
   Calendar,
   Tag,
   Trash,
+  Trash2,
+  AlertTriangle,
 } from "lucide-react";
 import {
   Button,
   Tabs,
   Tab,
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
 } from "@nextui-org/react";
 import TodoCard, { TodoItem } from "./TodoCard";
 import CustomSpinner from "@/frontend/components/ui/CustomSpinner";
@@ -40,6 +47,9 @@ export default function TodoList({ onNotify }: TodoListProps) {
   const [newDueDate, setNewDueDate] = useState("");
   const [newTags, setNewTags] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Confirm delete state
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   // Fetch todos
   const fetchTodos = async () => {
@@ -122,12 +132,23 @@ export default function TodoList({ onNotify }: TodoListProps) {
     }
   };
 
-  // Delete task
-  const handleDelete = async (id: string) => {
+  // Move task to bin (soft delete)
+  const handleMoveToTrash = (id: string) => {
+    setConfirmDeleteId(id);
+  };
+
+  const confirmMoveToTrash = async () => {
+    if (!confirmDeleteId) return;
+    const id = confirmDeleteId;
+    setConfirmDeleteId(null);
     setTodos((prev) => prev.filter((t) => t.id !== id));
     try {
-      await fetch(`/api/todos/${id}`, { method: "DELETE" });
-      if (onNotify) onNotify("Task removed", "info");
+      await fetch(`/api/todos/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isDeleted: true }),
+      });
+      if (onNotify) onNotify("Task moved to recycle bin", "error");
     } catch (err) {
       console.error(err);
       fetchTodos();
@@ -193,6 +214,7 @@ export default function TodoList({ onNotify }: TodoListProps) {
   }, [todos, statusFilter, priorityFilter, searchQuery]);
 
   return (
+    <>
     <div className="space-y-6 max-w-5xl mx-auto w-full pb-16">
       {/* Top Header & Stats Card */}
       <div className="glass-panel p-6 rounded-3xl relative overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
@@ -403,7 +425,7 @@ export default function TodoList({ onNotify }: TodoListProps) {
                 key={todo.id}
                 todo={todo}
                 onToggle={handleToggle}
-                onDelete={handleDelete}
+                onMoveToTrash={handleMoveToTrash}
                 onUpdate={handleUpdate}
               />
             ))}
@@ -411,5 +433,52 @@ export default function TodoList({ onNotify }: TodoListProps) {
         </div>
       )}
     </div>
+
+    {/* Confirm Move to Bin Modal */}
+    <Modal
+      isOpen={!!confirmDeleteId}
+      onOpenChange={(open) => { if (!open) setConfirmDeleteId(null); }}
+      backdrop="blur"
+      classNames={{
+        base: "bg-[rgba(15,10,25,0.65)] border border-white/[0.08] backdrop-blur-2xl text-white rounded-2xl shadow-[0_10px_60px_0_rgba(0,0,0,0.5)]",
+        header: "border-b border-white/[0.06] py-4 px-5",
+        body: "py-5 px-5",
+        footer: "border-t border-white/[0.06] py-4 px-5",
+        closeButton: "hover:bg-white/10 text-white/60 hover:text-white rounded-xl transition-all",
+      }}
+    >
+      <ModalContent>
+        {() => (
+          <>
+            <ModalHeader className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center text-red-400 shrink-0">
+                <AlertTriangle size={16} />
+              </div>
+              <span className="font-semibold text-sm">Move to Recycle Bin?</span>
+            </ModalHeader>
+            <ModalBody>
+              <p className="text-white/60 text-sm leading-relaxed">
+                This task will be moved to the recycle bin. You can restore it later.
+              </p>
+            </ModalBody>
+            <ModalFooter className="gap-2">
+              <button
+                onClick={() => setConfirmDeleteId(null)}
+                className="px-4 h-9 rounded-xl text-sm font-medium text-white/60 bg-white/5 border border-white/10 hover:text-white hover:bg-white/10 transition-all duration-200"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmMoveToTrash}
+                className="px-4 h-9 rounded-xl text-sm font-semibold text-white bg-red-600 hover:bg-red-500 shadow-lg shadow-red-500/20 hover:shadow-red-500/40 transition-all duration-200"
+              >
+                Move to Bin
+              </button>
+            </ModalFooter>
+          </>
+        )}
+      </ModalContent>
+    </Modal>
+    </>
   );
 }

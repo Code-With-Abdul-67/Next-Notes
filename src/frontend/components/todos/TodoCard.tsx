@@ -30,6 +30,7 @@ export interface TodoItem {
   title: string;
   description?: string | null;
   isCompleted: boolean;
+  isDeleted: boolean;
   priority: "low" | "medium" | "high" | "urgent";
   dueDate?: string | null;
   tags?: string;
@@ -41,7 +42,7 @@ export interface TodoItem {
 interface TodoCardProps {
   todo: TodoItem;
   onToggle: (id: string, isCompleted: boolean) => void;
-  onDelete: (id: string) => void;
+  onMoveToTrash: (id: string) => void;
   onUpdate: (id: string, updates: Partial<TodoItem>) => void;
 }
 
@@ -68,7 +69,7 @@ const PRIORITY_CONFIG = {
   },
 };
 
-export default function TodoCard({ todo, onToggle, onDelete, onUpdate }: TodoCardProps) {
+export default function TodoCard({ todo, onToggle, onMoveToTrash, onUpdate }: TodoCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(todo.title);
   const [editDesc, setEditDesc] = useState(todo.description || "");
@@ -221,10 +222,10 @@ export default function TodoCard({ todo, onToggle, onDelete, onUpdate }: TodoCar
                 <DropdownItem
                   key="delete"
                   startContent={<Trash2 size={13} />}
-                  onPress={() => onDelete(todo.id)}
+                  onPress={() => onMoveToTrash(todo.id)}
                   className="text-xs text-red-400 font-medium"
                 >
-                  Delete
+                  Move to Bin
                 </DropdownItem>
               </DropdownMenu>
             </Dropdown>

@@ -30,6 +30,7 @@ export async function PATCH(request: Request, { params }: Params) {
       title?: string;
       description?: string | null;
       isCompleted?: boolean;
+      isDeleted?: boolean;
       priority?: string;
       dueDate?: Date | null;
       tags?: string;
@@ -41,6 +42,7 @@ export async function PATCH(request: Request, { params }: Params) {
       updateData.description = typeof body.description === "string" ? body.description.trim().slice(0, 2000) : null;
     }
     if (typeof body.isCompleted === "boolean") updateData.isCompleted = body.isCompleted;
+    if (typeof body.isDeleted === "boolean") updateData.isDeleted = body.isDeleted;
     if (typeof body.priority === "string" && ["low", "medium", "high", "urgent"].includes(body.priority)) {
       updateData.priority = body.priority;
     }
