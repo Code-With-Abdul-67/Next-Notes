@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { Modal, ModalContent, ModalHeader, ModalBody } from "@nextui-org/react";
 import { Keyboard } from "lucide-react";
+import { useIsMac } from "@/frontend/lib/useIsMac";
 
 interface ShortcutsModalProps {
   isOpen: boolean;
@@ -38,7 +39,7 @@ export default function ShortcutsModal({ isOpen, onClose }: ShortcutsModalProps)
     return () => window.removeEventListener("keydown", handler);
   }, [isOpen, onClose]);
 
-  const isMac = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform);
+  const isMac = useIsMac();
 
   return (
     <Modal

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSession, signOut } from "next-auth/react";
+import { useIsMac } from "@/frontend/lib/useIsMac";
 
 import { Input } from "@nextui-org/react";
 import CustomSpinner from "@/frontend/components/ui/CustomSpinner";
@@ -42,6 +43,7 @@ interface Note {
 
 export default function Dashboard() {
   const { data: session, update: updateSession } = useSession();
+  const isMac = useIsMac();
   const [currentView, setCurrentView] = useState<"all" | "vault" | "bin" | "todos">("all");
   const [notes, setNotes] = useState<Note[]>([]);
   const [loading, setLoading] = useState(true);
@@ -650,12 +652,12 @@ export default function Dashboard() {
               )}
 
               {/* Command Palette trigger — desktop only */}
-              <button onClick={() => setIsCommandPaletteOpen(true)} title="Command Palette (Ctrl+K)"
+              <button onClick={() => setIsCommandPaletteOpen(true)} title={`Command Palette (${isMac ? "⌘" : "Ctrl"}+K)`}
                 className="hidden sm:flex items-center gap-2 px-3 h-10 rounded-xl text-white/30 bg-white/[0.03] border border-white/[0.06] hover:text-white/60 hover:bg-white/[0.06] hover:border-purple-500/20 transition-all duration-200 shrink-0 group">
                 <Search size={14} className="text-white/25 group-hover:text-purple-400/60 transition-colors" />
                 <span className="hidden sm:inline text-xs text-white/20 group-hover:text-white/40 transition-colors">Command...</span>
                 <kbd className="hidden sm:flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-medium text-white/20 bg-white/[0.04] border border-white/[0.06] ml-1">
-                  Ctrl K
+                  {isMac ? "⌘" : "Ctrl"} K
                 </kbd>
               </button>
 

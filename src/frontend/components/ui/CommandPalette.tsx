@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { Command } from "cmdk";
 import { Search, Lock, Trash2, Folder, Plus, LogOut, CheckSquare, Settings, Command as CommandIcon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useIsMac } from "@/frontend/lib/useIsMac";
 
 interface CommandPaletteProps {
   isOpen: boolean;
@@ -22,6 +23,8 @@ export default function CommandPalette({
   onOpenSettings,
   onLogout,
 }: CommandPaletteProps) {
+  const isMac = useIsMac();
+  const modKey = isMac ? "⌘" : "Ctrl";
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape" && isOpen) {
@@ -107,7 +110,7 @@ export default function CommandPalette({
                         <span className="text-[11px] text-white/30">Start writing a new note</span>
                       </div>
                       <kbd className="ml-auto hidden sm:flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] text-white/20 bg-white/[0.03] border border-white/[0.06]">
-                        ⌘N
+                        {modKey}N
                       </kbd>
                     </Command.Item>
 
@@ -123,7 +126,7 @@ export default function CommandPalette({
                         <span className="text-[11px] text-white/30">Customize Discord Nitro themes and profile</span>
                       </div>
                       <kbd className="ml-auto hidden sm:flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] text-white/20 bg-white/[0.03] border border-white/[0.06]">
-                        ⌘,
+                        {modKey},
                       </kbd>
                     </Command.Item>
                   </Command.Group>
