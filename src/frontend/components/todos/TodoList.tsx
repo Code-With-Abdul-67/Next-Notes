@@ -92,6 +92,9 @@ export default function TodoList({ onNotify }: TodoListProps) {
         setNewTags("");
         setIsAdding(false);
         if (onNotify) onNotify("Task created successfully!", "success");
+      } else {
+        const data = await res.json().catch(() => ({}));
+        if (onNotify) onNotify(data.error || "Failed to create task", "error");
       }
     } catch (err) {
       console.error(err);
