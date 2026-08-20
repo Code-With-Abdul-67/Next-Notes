@@ -51,22 +51,13 @@ export default function SettingsModal({
   onDeleteAccount,
   onUpdateUserName,
 }: SettingsModalProps) {
-  const { currentTheme, themeSettings, setTheme, setCustomTheme, resetToDefault, saveToServer } =
+  const { currentTheme, themeSettings, setTheme, resetToDefault, saveToServer } =
     useNitroTheme();
 
   const [activeTab, setActiveTab] = useState<string>("appearance");
   const [displayName, setDisplayName] = useState(user.name || "");
   const [isSavingName, setIsSavingName] = useState(false);
   const [nameSavedSuccess, setNameSavedSuccess] = useState(false);
-
-  // Custom theme controls state
-  const [customColor, setCustomColor] = useState(themeSettings.customAccent || "#5865F2");
-  const [customGradientStart, setCustomGradientStart] = useState(
-    themeSettings.customBgGradientStart || "#5865F2"
-  );
-  const [customGradientEnd, setCustomGradientEnd] = useState(
-    themeSettings.customBgGradientEnd || "#8B5CF6"
-  );
 
   const initials = (displayName || user.name || "U")
     .split(" ")
@@ -93,22 +84,6 @@ export default function SettingsModal({
     } finally {
       setIsSavingName(false);
     }
-  };
-
-  const applyCustomColor = (color: string) => {
-    setCustomColor(color);
-    setCustomTheme({
-      customAccent: color,
-    });
-  };
-
-  const applyCustomGradients = (start: string, end: string) => {
-    setCustomGradientStart(start);
-    setCustomGradientEnd(end);
-    setCustomTheme({
-      customBgGradientStart: start,
-      customBgGradientEnd: end,
-    });
   };
 
   return (
@@ -175,9 +150,6 @@ export default function SettingsModal({
                             <span className="px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider rounded-md bg-gradient-to-r from-pink-500 to-purple-600 text-white shadow-sm flex items-center gap-1">
                               <Flame size={12} /> Custom Theme Styling
                             </span>
-                            <h3 className="text-base font-bold text-white">
-                              Customize your own themes
-                            </h3>
                           </div>
                           <p className="text-xs text-white/60 leading-relaxed">
                             Personalize your workspace with vibrant gradients, glowing glass surfaces, and tailored dark palettes.
@@ -195,7 +167,7 @@ export default function SettingsModal({
                       </div>
                     </div>
 
-                    {/* Preset Theme Grid */}
+                    {/* Preset Theme Selector — compact pill list */}
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
                         <h4 className="text-xs font-bold uppercase tracking-wider text-white/50">
@@ -206,121 +178,37 @@ export default function SettingsModal({
                         </span>
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                      <div className="flex flex-wrap gap-2">
                         {NITRO_THEMES.map((theme) => {
                           const isSelected =
                             themeSettings.activeThemeId === theme.id && !themeSettings.isCustom;
                           return (
                             <motion.button
                               key={theme.id}
-                              whileHover={{ scale: 1.02 }}
-                              whileTap={{ scale: 0.98 }}
+                              whileHover={{ scale: 1.04 }}
+                              whileTap={{ scale: 0.96 }}
                               onClick={() => setTheme(theme.id)}
-                              className={`relative text-left p-3.5 rounded-2xl border transition-all flex flex-col justify-between h-28 overflow-hidden group backdrop-blur-sm ${isSelected
-                                  ? "border-purple-500/60 ring-2 ring-purple-500/20 bg-purple-500/[0.08] shadow-lg shadow-purple-500/10"
-                                  : "border-white/[0.08] hover:border-white/15 bg-white/[0.03] hover:bg-white/[0.06]"
-                                }`}
+                              className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all ${
+                                isSelected
+                                  ? "border-purple-500/60 bg-purple-500/15 text-white shadow-md shadow-purple-500/10 ring-1 ring-purple-500/20"
+                                  : "border-white/[0.08] bg-white/[0.03] text-white/60 hover:bg-white/[0.07] hover:text-white hover:border-white/20"
+                              }`}
                             >
-                              {/* Background Gradient Preview swatch */}
-                              <div
-                                className="absolute inset-0 opacity-25 group-hover:opacity-40 transition-opacity pointer-events-none"
-                                style={{
-                                  background: `linear-gradient(135deg, ${theme.previewColors[0]}, ${theme.previewColors[1]}, ${theme.previewColors[2]})`,
-                                }}
-                              />
-
-                              <div className="relative z-10 flex items-start justify-between w-full">
-                                <span className="font-bold text-sm text-white tracking-tight">
-                                  {theme.name}
-                                </span>
-                                {isSelected && (
-                                  <div className="w-5 h-5 rounded-full bg-purple-500 flex items-center justify-center text-white shadow-md">
-                                    <Check size={12} strokeWidth={3} />
-                                  </div>
-                                )}
+                              {/* 3 color dots */}
+                              <div className="flex items-center gap-0.5">
+                                {theme.previewColors.map((color, i) => (
+                                  <span
+                                    key={i}
+                                    className="w-2.5 h-2.5 rounded-full border border-black/30"
+                                    style={{ backgroundColor: color }}
+                                  />
+                                ))}
                               </div>
-
-                              <div className="relative z-10 space-y-2">
-                                <p className="text-[11px] text-white/50 line-clamp-1">
-                                  {theme.description}
-                                </p>
-                                <div className="flex items-center gap-1.5">
-                                  {theme.previewColors.map((color, i) => (
-                                    <div
-                                      key={i}
-                                      className="w-3.5 h-3.5 rounded-full border border-black/40 shadow-sm"
-                                      style={{ backgroundColor: color }}
-                                    />
-                                  ))}
-                                </div>
-                              </div>
+                              <span>{theme.name}</span>
+                              {isSelected && <Check size={11} strokeWidth={3} className="text-purple-400" />}
                             </motion.button>
                           );
                         })}
-                      </div>
-                    </div>
-
-                    {/* Custom Color Palette Studio */}
-                    <div className="p-4 rounded-2xl bg-white/[0.03] backdrop-blur-md border border-white/[0.06] space-y-4">
-                      <div className="flex items-center gap-2">
-                        <Palette size={16} className="text-purple-400" />
-                        <h4 className="text-xs font-bold uppercase tracking-wider text-white/70">
-                          Custom Accent Colors
-                        </h4>
-                      </div>
-
-                      <div className="flex flex-wrap items-center gap-3">
-                        {[
-                          { name: "Blurple", hex: "#5865F2" },
-                          { name: "Cyan Neon", hex: "#00F2FE" },
-                          { name: "Emerald", hex: "#10B981" },
-                          { name: "Sunset Orange", hex: "#FF4B2B" },
-                          { name: "Sakura Pink", hex: "#F67280" },
-                          { name: "Crimson", hex: "#EF4444" },
-                          { name: "Gold", hex: "#F59E0B" },
-                          { name: "Synth Magenta", hex: "#EC4899" },
-                          { name: "Electric Indigo", hex: "#8B5CF6" },
-                          { name: "Pure White", hex: "#FFFFFF" },
-                        ].map((swatch) => (
-                          <button
-                            key={swatch.hex}
-                            onClick={() => applyCustomColor(swatch.hex)}
-                            className="group relative flex items-center gap-2 px-3 py-1.5 rounded-xl border border-white/10 hover:border-white/30 bg-white/5 transition-all text-xs text-white/80 hover:text-white"
-                          >
-                            <span
-                              className="w-3.5 h-3.5 rounded-full shadow-sm"
-                              style={{ backgroundColor: swatch.hex }}
-                            />
-                            <span>{swatch.name}</span>
-                          </button>
-                        ))}
-                      </div>
-
-                      {/* Manual Hex Input */}
-                      <div className="pt-2 flex flex-col sm:flex-row items-center gap-3">
-                        <div className="flex items-center gap-2 w-full sm:w-auto">
-                          <label className="text-xs text-white/60 shrink-0">Custom Hex:</label>
-                          <input
-                            type="color"
-                            value={customColor}
-                            onChange={(e) => applyCustomColor(e.target.value)}
-                            className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0"
-                          />
-                          <Input
-                            size="sm"
-                            value={customColor}
-                            onChange={(e) => applyCustomColor(e.target.value)}
-                            className="max-w-[120px]"
-                            classNames={{
-                              inputWrapper: "bg-white/5 border border-white/10 rounded-xl h-8",
-                              input: "text-xs font-mono uppercase text-white",
-                            }}
-                          />
-                        </div>
-
-                        <span className="text-[11px] text-white/40">
-                          Instantly recolors buttons, active navigation, search glows and border accents.
-                        </span>
                       </div>
                     </div>
                   </div>
