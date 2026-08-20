@@ -155,8 +155,8 @@ export default function Dashboard() {
     return () => { cancelled = true; };
   }, [userId]);
 
-  const fetchNotes = useCallback(async () => {
-    setLoading(true);
+  const fetchNotes = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const params = new URLSearchParams();
       if (currentView === "bin") params.set("trash", "true");
@@ -266,7 +266,29 @@ export default function Dashboard() {
         addToast("error", data.error || "Failed to save note.");
         return;
       }
-      fetchNotes();
+      const saved = await res.json().catch(() => null);
+      if (id && saved) {
+        // Update the note in-place — no loading flash, modal stays open for auto-save
+        setNotes((prev) =>
+          prev.map((n) =>
+            n.id === id
+              ? {
+                  ...n,
+                  title: saved.title ?? storedTitle,
+                  content: saved.content ?? storedContent,
+                  isPinned: saved.isPinned ?? isPinned,
+                  isLocked: saved.isLocked ?? isLocked,
+                  color: saved.color ?? color,
+                  tags: saved.tags ?? tags,
+                  updatedAt: saved.updatedAt ?? n.updatedAt,
+                }
+              : n
+          )
+        );
+      } else {
+        // New note — silent fetch so no loading spinner interrupts the UI
+        fetchNotes(true);
+      }
     } catch {
       addToast("error", "Failed to save note. Please try again.");
     } finally {
@@ -601,8 +623,9 @@ export default function Dashboard() {
             </div>
 
             <div className="flex items-center gap-2 w-full sm:w-auto">
+              {/* Sort — hidden on mobile (todos/bin don't need it; notes use it on desktop) */}
               {currentView !== "bin" && (
-                <div className="relative">
+                <div className="relative hidden sm:block">
                   <button onClick={() => setShowSortMenu((v) => !v)}
                     className="flex items-center gap-1.5 px-3 h-10 rounded-xl text-xs font-medium text-white/50 bg-white/5 border border-white/10 hover:text-white hover:bg-white/10 transition-all duration-200 shrink-0">
                     <ArrowUpDown size={13} />
@@ -626,9 +649,9 @@ export default function Dashboard() {
                 </div>
               )}
 
-              {/* Command Palette trigger */}
+              {/* Command Palette trigger — desktop only */}
               <button onClick={() => setIsCommandPaletteOpen(true)} title="Command Palette (Ctrl+K)"
-                className="flex items-center gap-2 px-3 h-10 rounded-xl text-white/30 bg-white/[0.03] border border-white/[0.06] hover:text-white/60 hover:bg-white/[0.06] hover:border-purple-500/20 transition-all duration-200 shrink-0 group">
+                className="hidden sm:flex items-center gap-2 px-3 h-10 rounded-xl text-white/30 bg-white/[0.03] border border-white/[0.06] hover:text-white/60 hover:bg-white/[0.06] hover:border-purple-500/20 transition-all duration-200 shrink-0 group">
                 <Search size={14} className="text-white/25 group-hover:text-purple-400/60 transition-colors" />
                 <span className="hidden sm:inline text-xs text-white/20 group-hover:text-white/40 transition-colors">Command...</span>
                 <kbd className="hidden sm:flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-medium text-white/20 bg-white/[0.04] border border-white/[0.06] ml-1">
@@ -636,9 +659,9 @@ export default function Dashboard() {
                 </kbd>
               </button>
 
-              {/* Keyboard shortcuts button */}
+              {/* Keyboard shortcuts button — desktop only */}
               <button onClick={() => setShortcutsOpen(true)} title="Keyboard shortcuts (?)"
-                className="flex items-center justify-center w-10 h-10 rounded-xl text-white/30 bg-white/5 border border-white/10 hover:text-white hover:bg-white/10 transition-all duration-200 shrink-0">
+                className="hidden sm:flex items-center justify-center w-10 h-10 rounded-xl text-white/30 bg-white/5 border border-white/10 hover:text-white hover:bg-white/10 transition-all duration-200 shrink-0">
                 <Keyboard size={15} />
               </button>
 
@@ -873,7 +896,7 @@ export default function Dashboard() {
             else if (type === "delete")   { addToast("deleted", "Note permanently deleted"); executeDeletePermanent(id); }
             else if (type === "emptyBin") { addToast("deleted", "Recycle Bin emptied"); executeEmptyBin(); }
             else if (type === "deleteVault") {
-              fetch("/api/vault/delete-confirm", { method: "POST" })
+              fetch("/api/vault/delete-confirm", { method: "DELETE" })
                 .then((res) => {
                   if (res.ok) { setHasVaultPassword(false); setVaultUnlocked(false); setVaultPasswordSync(null); if (currentView === "vault") setCurrentView("all"); fetchNotes(); }
                   else addToast("error", "Failed to delete vault");
