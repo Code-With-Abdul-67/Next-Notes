@@ -9,9 +9,9 @@ A premium, secure, and beautifully designed note-taking workspace built with **N
 
 ---
 
-## ✨ Features
+## ✨ Key Features
 
-### 🔐 Authentication
+### 1- 🔐 Authentication
 - Google OAuth sign-in via NextAuth.js
 - JWT session strategy with persistent login
 - Logout confirmation modal
