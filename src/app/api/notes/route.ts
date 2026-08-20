@@ -38,17 +38,18 @@ export async function GET(request: Request) {
         isLocked,
         AND: [
           // Text search (skipped for vault — content is encrypted)
+          // Note: SQLite LIKE is case-insensitive for ASCII by default, so no mode needed
           searchQuery && !isLocked
             ? {
                 OR: [
-                  { title: { contains: searchQuery, mode: "insensitive" } },
-                  { content: { contains: searchQuery, mode: "insensitive" } },
+                  { title: { contains: searchQuery } },
+                  { content: { contains: searchQuery } },
                 ],
               }
             : {},
           // Tag filter
           tagFilter
-            ? { tags: { contains: tagFilter, mode: "insensitive" } }
+            ? { tags: { contains: tagFilter } }
             : {},
         ],
       },
