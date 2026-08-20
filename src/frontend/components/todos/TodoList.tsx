@@ -349,14 +349,29 @@ export default function TodoList({ onNotify }: TodoListProps) {
           variant="light"
           aria-label="Filter tasks by status"
           classNames={{
-            tabList: "bg-white/5 p-1 rounded-2xl border border-white/5 gap-1",
-            cursor: "bg-purple-600 rounded-xl",
-            tab: "h-8 text-xs font-semibold text-white/70 data-[selected=true]:text-white",
+            tabList: "bg-white/5 p-1 rounded-2xl border border-purple-500/20 gap-1",
+            cursor: "bg-gradient-to-r from-purple-600 to-indigo-600 rounded-xl shadow-lg shadow-purple-500/30",
+            tab: "h-8 text-xs font-semibold text-white/50 data-[selected=true]:text-white data-[hover=true]:text-white/80",
           }}
         >
-          <Tab key="all" title={`All (${totalTasks})`} />
-          <Tab key="active" title={`Pending (${pendingCount})`} />
-          <Tab key="completed" title={`Completed (${completedCount})`} />
+          <Tab key="all" title={
+            <span className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-purple-400 opacity-80" />
+              All ({totalTasks})
+            </span>
+          } />
+          <Tab key="active" title={
+            <span className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 opacity-80" />
+              Pending ({pendingCount})
+            </span>
+          } />
+          <Tab key="completed" title={
+            <span className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 opacity-80" />
+              Completed ({completedCount})
+            </span>
+          } />
         </Tabs>
 
         <div className="flex items-center gap-2 w-full sm:w-auto">
