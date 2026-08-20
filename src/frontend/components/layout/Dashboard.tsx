@@ -6,7 +6,7 @@ import { useIsMac } from "@/frontend/lib/useIsMac";
 
 import { Input } from "@nextui-org/react";
 import CustomSpinner from "@/frontend/components/ui/CustomSpinner";
-import { Search, FileText, Trash2, Lock, Trash, Plus, LockKeyhole, ArrowUpDown, Keyboard, Tag, X, LayoutGrid, CheckSquare, User, LogOut, Sparkles } from "lucide-react";
+import { Search, FileText, Trash2, Lock, Trash, Plus, LockKeyhole, ArrowUpDown, Tag, X, CheckSquare } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import Sidebar from "@/frontend/components/layout/Sidebar";
 import NoteCard from "@/frontend/components/notes/NoteCard";
@@ -625,64 +625,92 @@ export default function Dashboard() {
             </div>
 
             <div className="flex items-center gap-2 w-full sm:w-auto">
-              {/* Sort — hidden on mobile (todos/bin don't need it; notes use it on desktop) */}
-              {currentView !== "bin" && (
-                <div className="relative hidden sm:block">
-                  <button onClick={() => setShowSortMenu((v) => !v)}
-                    className="flex items-center gap-1.5 px-3 h-10 rounded-xl text-xs font-medium text-white/50 bg-white/5 border border-white/10 hover:text-white hover:bg-white/10 transition-all duration-200 shrink-0">
-                    <ArrowUpDown size={13} />
-                    <span className="hidden sm:inline">
-                      {sortOption === "updated" ? "Last edited" : sortOption === "created" ? "Created" : "Title"}
-                    </span>
-                  </button>
-                  {showSortMenu && (
-                    <>
-                      <div className="fixed inset-0 z-10" onClick={() => setShowSortMenu(false)} />
-                      <div className="absolute right-0 top-12 z-20 glass-panel border border-white/10 rounded-xl p-1 min-w-[140px] shadow-xl">
-                        {(["updated", "created", "title"] as SortOption[]).map((opt) => (
-                          <button key={opt} onClick={() => { setSortOption(opt); setShowSortMenu(false); }}
-                            className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors ${sortOption === opt ? "text-purple-300 bg-purple-500/10" : "text-white/60 hover:text-white hover:bg-white/5"}`}>
-                            {opt === "updated" ? "Last edited" : opt === "created" ? "Date created" : "Title A–Z"}
-                          </button>
-                        ))}
-                      </div>
-                    </>
+              {/* Unified search bar — the single focal point of the header */}
+              {currentView !== "vault" && (
+                <div className="relative flex items-center w-full sm:w-80">
+                  {/* Sort — quiet icon tucked left of search, only on note views */}
+                  {currentView !== "bin" && currentView !== "todos" && (
+                    <div className="relative shrink-0">
+                      <button
+                        onClick={() => setShowSortMenu((v) => !v)}
+                        title="Sort"
+                        className="absolute left-3 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center text-white/25 hover:text-white/60 transition-colors"
+                      >
+                        <ArrowUpDown size={13} />
+                      </button>
+                      {showSortMenu && (
+                        <>
+                          <div className="fixed inset-0 z-10" onClick={() => setShowSortMenu(false)} />
+                          <div className="absolute left-0 top-12 z-20 glass-panel border border-white/10 rounded-xl p-1 min-w-[150px] shadow-xl">
+                            {(["updated", "created", "title"] as SortOption[]).map((opt) => (
+                              <button key={opt} onClick={() => { setSortOption(opt); setShowSortMenu(false); }}
+                                className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors ${sortOption === opt ? "text-purple-300 bg-purple-500/10" : "text-white/60 hover:text-white hover:bg-white/5"}`}>
+                                {opt === "updated" ? "Last edited" : opt === "created" ? "Date created" : "Title A–Z"}
+                              </button>
+                            ))}
+                          </div>
+                        </>
+                      )}
+                    </div>
                   )}
+
+                  <Input
+                    placeholder={currentView === "todos" ? "Search notes..." : "Search notes..."}
+                    variant="flat"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    classNames={{
+                      inputWrapper: `glass-input h-10 ${currentView !== "bin" && currentView !== "todos" ? "pl-8" : ""}`,
+                      input: "text-white text-sm placeholder:text-white/25",
+                    }}
+                  />
+
+                  {/* ⌘K hint — opens command palette, lives inside search bar right edge */}
+                  <button
+                    onClick={() => setIsCommandPaletteOpen(true)}
+                    title={`Command Palette (${isMac ? "⌘" : "Ctrl"}+K)`}
+                    className="hidden sm:flex absolute right-2.5 top-1/2 -translate-y-1/2 items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-medium text-white/20 bg-white/[0.04] border border-white/[0.06] hover:text-white/50 hover:bg-white/[0.08] hover:border-white/[0.12] transition-all duration-150 cursor-pointer z-10"
+                  >
+                    {isMac ? "⌘" : "Ctrl"} K
+                  </button>
                 </div>
               )}
 
-              {/* Command Palette trigger — desktop only */}
-              <button onClick={() => setIsCommandPaletteOpen(true)} title={`Command Palette (${isMac ? "⌘" : "Ctrl"}+K)`}
-                className="hidden sm:flex items-center gap-2 px-3 h-10 rounded-xl text-white/30 bg-white/[0.03] border border-white/[0.06] hover:text-white/60 hover:bg-white/[0.06] hover:border-purple-500/20 transition-all duration-200 shrink-0 group">
-                <Search size={14} className="text-white/25 group-hover:text-purple-400/60 transition-colors" />
-                <span className="hidden sm:inline text-xs text-white/20 group-hover:text-white/40 transition-colors">Command...</span>
-                <kbd className="hidden sm:flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-medium text-white/20 bg-white/[0.04] border border-white/[0.06] ml-1">
-                  {isMac ? "⌘" : "Ctrl"} K
-                </kbd>
-              </button>
-
-              {/* Keyboard shortcuts button — desktop only */}
-              <button onClick={() => setShortcutsOpen(true)} title="Keyboard shortcuts (?)"
-                className="hidden sm:flex items-center justify-center w-10 h-10 rounded-xl text-white/30 bg-white/5 border border-white/10 hover:text-white hover:bg-white/10 transition-all duration-200 shrink-0">
-                <Keyboard size={15} />
-              </button>
-
-              <div className="w-full sm:w-72">
-                {/* Normal search (non-vault) */}
-                {currentView !== "vault" && (
-                  <Input placeholder="Search notes..." variant="flat" value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    startContent={<Search size={16} className="text-white/30" />}
-                    classNames={{ inputWrapper: "glass-input h-10", input: "text-white text-sm placeholder:text-white/30" }} />
-                )}
-                {/* Vault search (client-side, only when unlocked) */}
-                {currentView === "vault" && vaultUnlocked && (
-                  <Input placeholder="Search vault..." variant="flat" value={vaultSearchQuery}
+              {/* Vault search — shown when vault is unlocked */}
+              {currentView === "vault" && vaultUnlocked && (
+                <div className="relative flex items-center w-full sm:w-80">
+                  <Input
+                    placeholder="Search vault..."
+                    variant="flat"
+                    value={vaultSearchQuery}
                     onChange={(e) => setVaultSearchQuery(e.target.value)}
-                    startContent={<Search size={16} className="text-white/30" />}
-                    classNames={{ inputWrapper: "glass-input h-10", input: "text-white text-sm placeholder:text-white/30" }} />
-                )}
-              </div>
+                    startContent={<Search size={14} className="text-white/25" />}
+                    classNames={{
+                      inputWrapper: "glass-input h-10",
+                      input: "text-white text-sm placeholder:text-white/25",
+                    }}
+                  />
+                  <button
+                    onClick={() => setIsCommandPaletteOpen(true)}
+                    title={`Command Palette (${isMac ? "⌘" : "Ctrl"}+K)`}
+                    className="hidden sm:flex absolute right-2.5 top-1/2 -translate-y-1/2 items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-medium text-white/20 bg-white/[0.04] border border-white/[0.06] hover:text-white/50 hover:bg-white/[0.08] hover:border-white/[0.12] transition-all duration-150 cursor-pointer z-10"
+                  >
+                    {isMac ? "⌘" : "Ctrl"} K
+                  </button>
+                </div>
+              )}
+
+              {/* Vault locked — still show command palette hint */}
+              {currentView === "vault" && !vaultUnlocked && (
+                <button
+                  onClick={() => setIsCommandPaletteOpen(true)}
+                  title={`Command Palette (${isMac ? "⌘" : "Ctrl"}+K)`}
+                  className="hidden sm:flex items-center gap-1.5 px-3 h-10 rounded-xl text-white/20 bg-white/[0.03] border border-white/[0.06] hover:text-white/40 hover:bg-white/[0.06] transition-all duration-200 shrink-0"
+                >
+                  <Search size={13} className="text-white/20" />
+                  <kbd className="text-[10px] font-medium">{isMac ? "⌘" : "Ctrl"} K</kbd>
+                </button>
+              )}
             </div>
           </div>
 
