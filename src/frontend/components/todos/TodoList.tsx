@@ -440,11 +440,13 @@ export default function TodoList({ onNotify }: TodoListProps) {
       onOpenChange={(open) => { if (!open) setConfirmDeleteId(null); }}
       backdrop="blur"
       classNames={{
-        base: "bg-[rgba(15,10,25,0.65)] border border-white/[0.08] backdrop-blur-2xl text-white rounded-2xl shadow-[0_10px_60px_0_rgba(0,0,0,0.5)]",
+        wrapper: "backdrop-blur-sm",
+        backdrop: "bg-black/40 backdrop-blur-sm",
+        base: "bg-black/30 border border-white/[0.1] backdrop-blur-2xl backdrop-saturate-150 text-white rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.6),0_0_0_1px_rgba(255,255,255,0.04)]",
         header: "border-b border-white/[0.06] py-4 px-5",
         body: "py-5 px-5",
-        footer: "border-t border-white/[0.06] py-4 px-5",
-        closeButton: "hover:bg-white/10 text-white/60 hover:text-white rounded-xl transition-all",
+        footer: "border-t border-white/[0.06] py-4 px-5 gap-2",
+        closeButton: "hover:bg-white/10 text-white/50 hover:text-white rounded-xl transition-all",
       }}
     >
       <ModalContent>

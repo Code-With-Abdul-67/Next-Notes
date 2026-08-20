@@ -658,7 +658,7 @@ export default function Dashboard() {
           <AnimatePresence mode="wait">
             <motion.div key={currentView} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }} className="w-full h-full">
               {currentView === "todos" ? (
-                <TodoList onNotify={(msg, type) => addToast(type === "error" ? "error" : "vault", msg)} />
+                <TodoList onNotify={(msg, type) => addToast(type === "error" ? "bin" : "success", msg)} />
               ) : currentView === "vault" && !vaultUnlocked && vaultChecked ? (
                 <VaultLock
                   onUnlock={(pwd) => { setVaultPasswordSync(pwd); setVaultUnlocked(true); }}
