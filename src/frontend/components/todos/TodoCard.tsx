@@ -107,7 +107,7 @@ export default function TodoCard({ todo, onToggle, onDelete, onUpdate }: TodoCar
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95 }}
       transition={{ duration: 0.2 }}
-      className={`glass-card p-4 rounded-2xl group transition-all relative overflow-hidden flex flex-col justify-between gap-3 ${
+      className={`glass-card p-3 rounded-2xl group transition-all relative overflow-hidden flex flex-col justify-between gap-2 border border-white/[0.06] hover:border-white/[0.12] ${
         todo.isCompleted ? "opacity-60 bg-white/[0.01]" : "bg-white/[0.03]"
       }`}
     >
