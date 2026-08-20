@@ -122,10 +122,10 @@ export default function SettingsModal({
       scrollBehavior="inside"
       backdrop="blur"
       classNames={{
-        base: "bg-zinc-950/95 border border-white/10 backdrop-blur-2xl text-white max-h-[90vh] rounded-3xl shadow-2xl",
-        header: "border-b border-white/5 pb-3 pt-5 px-6",
+        base: "bg-[rgba(15,10,25,0.55)] border border-white/[0.08] backdrop-blur-2xl text-white max-h-[90vh] rounded-3xl shadow-[0_10px_60px_0_rgba(0,0,0,0.5),0_0_0_1px_rgba(255,255,255,0.04)] backdrop-saturate-150",
+        header: "border-b border-white/[0.06] pb-3 pt-5 px-6",
         body: "py-4 px-6",
-        footer: "border-t border-white/5 py-4 px-6",
+        footer: "border-t border-white/[0.06] py-4 px-6",
         closeButton: "hover:bg-white/10 text-white/70 active:scale-95 transition-all",
       }}
     >
@@ -151,9 +151,9 @@ export default function SettingsModal({
                 variant="light"
                 aria-label="Settings navigation"
                 classNames={{
-                  tabList: "bg-white/5 p-1 rounded-2xl border border-white/5 w-full gap-2",
-                  cursor: "bg-gradient-to-r from-purple-600 to-indigo-600 rounded-xl shadow-md",
-                  tab: "h-9 text-xs font-semibold text-white/70 data-[selected=true]:text-white transition-all",
+                  tabList: "bg-white/[0.04] backdrop-blur-md p-1 rounded-2xl border border-white/[0.08] w-full gap-2",
+                  cursor: "bg-gradient-to-r from-purple-600/80 to-indigo-600/80 rounded-xl shadow-lg shadow-purple-500/20 backdrop-blur-sm",
+                  tab: "h-9 text-xs font-semibold text-white/60 data-[selected=true]:text-white transition-all",
                 }}
               >
                 {/* ─── TAB 1: CUSTOM THEMES ─────────────────────────────── */}
@@ -168,7 +168,7 @@ export default function SettingsModal({
                 >
                   <div className="pt-3 space-y-6">
                     {/* Nitro Header Banner */}
-                    <div className="relative overflow-hidden rounded-2xl p-5 border border-purple-500/20 bg-gradient-to-r from-purple-900/30 via-indigo-900/20 to-pink-900/20 backdrop-blur-md">
+                    <div className="relative overflow-hidden rounded-2xl p-5 border border-purple-500/15 bg-gradient-to-r from-purple-900/20 via-indigo-900/15 to-pink-900/15 backdrop-blur-xl shadow-lg shadow-purple-900/10">
                       <div className="relative z-10 flex items-start justify-between gap-4">
                         <div className="space-y-1 max-w-md">
                           <div className="flex items-center gap-2">
@@ -216,9 +216,9 @@ export default function SettingsModal({
                               whileHover={{ scale: 1.02 }}
                               whileTap={{ scale: 0.98 }}
                               onClick={() => setTheme(theme.id)}
-                              className={`relative text-left p-3.5 rounded-2xl border transition-all flex flex-col justify-between h-28 overflow-hidden group ${isSelected
-                                  ? "border-purple-500 ring-2 ring-purple-500/30 bg-purple-500/10 shadow-lg shadow-purple-500/10"
-                                  : "border-white/10 hover:border-white/20 bg-white/[0.02] hover:bg-white/[0.04]"
+                              className={`relative text-left p-3.5 rounded-2xl border transition-all flex flex-col justify-between h-28 overflow-hidden group backdrop-blur-sm ${isSelected
+                                  ? "border-purple-500/60 ring-2 ring-purple-500/20 bg-purple-500/[0.08] shadow-lg shadow-purple-500/10"
+                                  : "border-white/[0.08] hover:border-white/15 bg-white/[0.03] hover:bg-white/[0.06]"
                                 }`}
                             >
                               {/* Background Gradient Preview swatch */}
@@ -261,7 +261,7 @@ export default function SettingsModal({
                     </div>
 
                     {/* Custom Color Palette Studio */}
-                    <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/5 space-y-4">
+                    <div className="p-4 rounded-2xl bg-white/[0.03] backdrop-blur-md border border-white/[0.06] space-y-4">
                       <div className="flex items-center gap-2">
                         <Palette size={16} className="text-purple-400" />
                         <h4 className="text-xs font-bold uppercase tracking-wider text-white/70">
@@ -338,7 +338,7 @@ export default function SettingsModal({
                 >
                   <div className="pt-3 space-y-6">
                     {/* User Profile Card */}
-                    <div className="p-5 rounded-2xl bg-white/[0.03] border border-white/5 flex flex-col sm:flex-row items-center sm:items-start gap-5">
+                    <div className="p-5 rounded-2xl bg-white/[0.03] backdrop-blur-md border border-white/[0.06] shadow-lg shadow-black/10 flex flex-col sm:flex-row items-center sm:items-start gap-5">
                       <div className="w-20 h-20 rounded-2xl bg-gradient-to-tr from-purple-600 to-indigo-600 border-2 border-white/10 flex items-center justify-center text-2xl font-black text-white shadow-xl shadow-purple-500/20 shrink-0">
                         {initials}
                       </div>
@@ -398,7 +398,7 @@ export default function SettingsModal({
                       </h4>
 
                       {/* Delete Vault Option */}
-                      <div className="p-4 rounded-2xl bg-amber-500/[0.04] border border-amber-500/20 flex items-center justify-between gap-4">
+                      <div className="p-4 rounded-2xl bg-amber-500/[0.04] backdrop-blur-md border border-amber-500/15 shadow-md shadow-amber-900/10 flex items-center justify-between gap-4">
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
                             <Lock size={15} className="text-amber-400" />
@@ -430,7 +430,7 @@ export default function SettingsModal({
 
                       {/* Delete Account Option */}
                       {onDeleteAccount && (
-                        <div className="p-4 rounded-2xl bg-red-500/[0.04] border border-red-500/20 flex items-center justify-between gap-4">
+                        <div className="p-4 rounded-2xl bg-red-500/[0.04] backdrop-blur-md border border-red-500/15 shadow-md shadow-red-900/10 flex items-center justify-between gap-4">
                           <div className="space-y-1">
                             <div className="flex items-center gap-2">
                               <Trash2 size={15} className="text-red-400" />
