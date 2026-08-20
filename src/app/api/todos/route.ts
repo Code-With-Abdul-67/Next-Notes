@@ -3,17 +3,19 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/backend/lib/auth";
 import { prisma } from "@/backend/lib/prisma";
 
-export async function GET() {
+export async function GET(request: Request) {
   const session = await getServerSession(authOptions);
   if (!session || !session.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const userId = (session.user as { id: string }).id;
+  const { searchParams } = new URL(request.url);
+  const trash = searchParams.get("trash") === "true";
 
   try {
     const todos = await prisma.todo.findMany({
-      where: { userId, isDeleted: false },
+      where: { userId, isDeleted: trash },
       orderBy: [{ isCompleted: "asc" }, { order: "asc" }, { createdAt: "desc" }],
     });
 

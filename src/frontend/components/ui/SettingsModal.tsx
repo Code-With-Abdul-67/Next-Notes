@@ -144,8 +144,8 @@ export default function SettingsModal({
                   <div className="pt-3 space-y-6">
                     {/* Nitro Header Banner */}
                     <div className="relative overflow-hidden rounded-2xl p-5 border border-purple-500/15 bg-gradient-to-r from-purple-900/20 via-indigo-900/15 to-pink-900/15 backdrop-blur-xl shadow-lg shadow-purple-900/10">
-                      <div className="relative z-10 flex items-start justify-between gap-4">
-                        <div className="space-y-1 max-w-md">
+                      <div className="relative z-10 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                        <div className="space-y-1">
                           <div className="flex items-center gap-2">
                             <span className="px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider rounded-md bg-gradient-to-r from-pink-500 to-purple-600 text-white shadow-sm flex items-center gap-1">
                               <Flame size={12} /> Custom Theme Styling
@@ -160,7 +160,7 @@ export default function SettingsModal({
                           variant="flat"
                           startContent={<RotateCcw size={13} />}
                           onPress={resetToDefault}
-                          className="bg-white/10 hover:bg-white/15 text-white/80 text-xs rounded-xl border border-white/5 shrink-0"
+                          className="bg-white/10 hover:bg-white/15 text-white/80 text-xs rounded-xl border border-white/5 shrink-0 self-start"
                         >
                           Reset Default
                         </Button>

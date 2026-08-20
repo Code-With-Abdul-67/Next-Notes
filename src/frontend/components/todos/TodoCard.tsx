@@ -182,14 +182,19 @@ export default function TodoCard({ todo, onToggle, onMoveToTrash, onUpdate }: To
 
         {/* Action Menu */}
         {!isEditing && (
-          <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center shrink-0">
-            <Dropdown placement="bottom-end" className="bg-zinc-950/95 border border-white/10 text-white rounded-xl">
+          <div className="sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex items-center shrink-0">
+            <Dropdown placement="bottom-end" classNames={{
+              base: "before:bg-black/20",
+              content: "bg-black/40 backdrop-blur-2xl backdrop-saturate-150 border border-white/10 text-white rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.5),0_0_0_1px_rgba(255,255,255,0.04)] p-1 min-w-[160px]",
+            }}>
               <DropdownTrigger>
                 <button className="p-1 rounded-lg hover:bg-white/10 text-white/50 hover:text-white transition-colors">
                   <MoreVertical size={14} />
                 </button>
               </DropdownTrigger>
-              <DropdownMenu aria-label="Todo Actions" variant="flat">
+              <DropdownMenu aria-label="Todo Actions" variant="flat" itemClasses={{
+                base: "rounded-xl data-[hover=true]:bg-white/10 data-[hover=true]:text-white transition-colors px-3 py-2",
+              }}>
                 <DropdownItem
                   key="edit"
                   startContent={<Edit2 size={13} />}

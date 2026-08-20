@@ -215,7 +215,7 @@ export default function TodoList({ onNotify }: TodoListProps) {
 
   return (
     <>
-    <div className="space-y-6 max-w-5xl mx-auto w-full pb-16">
+    <div className="space-y-6 max-w-5xl mx-auto w-full pb-24 md:pb-16">
       {/* Top Header & Stats Card */}
       <div className="glass-panel p-6 rounded-3xl relative overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div className="space-y-2 z-10">
@@ -418,7 +418,7 @@ export default function TodoList({ onNotify }: TodoListProps) {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
           <AnimatePresence>
             {filteredTodos.map((todo) => (
               <TodoCard

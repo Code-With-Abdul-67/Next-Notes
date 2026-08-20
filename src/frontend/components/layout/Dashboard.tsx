@@ -45,6 +45,7 @@ export default function Dashboard() {
   const [currentView, setCurrentView] = useState<"all" | "vault" | "bin" | "todos">("all");
   const [notes, setNotes] = useState<Note[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deletedTodos, setDeletedTodos] = useState<{ id: string; title: string; description?: string | null; priority: string; isCompleted: boolean; createdAt?: string }[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [activeTag, setActiveTag] = useState<string | null>(null);
@@ -197,6 +198,29 @@ export default function Dashboard() {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentView, debouncedQuery, activeTag]);
+
+  // Fetch deleted todos when entering bin view
+  useEffect(() => {
+    if (currentView !== "bin") { setDeletedTodos([]); return; }
+    fetch("/api/todos?trash=true")
+      .then((r) => r.json())
+      .then((data) => setDeletedTodos(Array.isArray(data) ? data : []))
+      .catch(() => setDeletedTodos([]));
+  }, [currentView]);
+
+  const handleRestoreTodo = async (id: string) => {
+    setDeletedTodos((prev) => prev.filter((t) => t.id !== id));
+    await fetch(`/api/todos/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ isDeleted: false }),
+    });
+  };
+
+  const handleDeleteTodoPermanent = async (id: string) => {
+    setDeletedTodos((prev) => prev.filter((t) => t.id !== id));
+    await fetch(`/api/todos/${id}`, { method: "DELETE" });
+  };
 
   useEffect(() => {
     if (!userId) return;
@@ -390,6 +414,11 @@ export default function Dashboard() {
     try {
       const res = await fetch("/api/notes/empty-bin", { method: "DELETE" });
       if (!res.ok) { addToast("error", "Failed to empty bin"); return; }
+      // Also permanently delete all soft-deleted todos
+      await Promise.all(
+        deletedTodos.map((t) => fetch(`/api/todos/${t.id}`, { method: "DELETE" }))
+      );
+      setDeletedTodos([]);
       fetchNotes();
     } catch {
       addToast("error", "Failed to empty bin");
@@ -559,7 +588,7 @@ export default function Dashboard() {
                   <span className="relative z-10">Lock Vault</span>
                 </button>
               )}
-              {currentView === "bin" && !loading && notes.length > 0 && (
+              {currentView === "bin" && !loading && (notes.length > 0 || deletedTodos.length > 0) && (
                 <button onClick={handleEmptyBin}
                   className="group relative overflow-hidden ml-2 flex items-center gap-1.5 px-3 h-7 rounded-lg text-xs font-semibold text-red-400 bg-red-500/10 border border-red-500/20 transition-all duration-200 hover:bg-red-500/20 hover:border-red-500/40">
                   <div className="absolute inset-0 pointer-events-none z-0">
@@ -654,7 +683,7 @@ export default function Dashboard() {
           )}
         </header>
 
-        <div className="flex-1 p-6 overflow-y-auto">
+        <div className="flex-1 p-6 pb-24 md:pb-6 overflow-y-auto">
           <AnimatePresence mode="wait">
             <motion.div key={currentView} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }} className="w-full h-full">
               {currentView === "todos" ? (
@@ -669,7 +698,7 @@ export default function Dashboard() {
                 <div className="flex items-center justify-center h-64"><CustomSpinner size={48} /></div>
               ) : loading ? (
                 <div className="flex items-center justify-center h-64"><CustomSpinner size={48} /></div>
-              ) : sortedNotes.length === 0 ? (
+              ) : sortedNotes.length === 0 && !(currentView === "bin" && deletedTodos.length > 0) ? (
                 <div className="flex flex-col items-center justify-center h-64 text-center p-4 gap-4">
                   <p className="text-white/40 text-sm max-w-sm">
                     {activeTag ? `No notes tagged with #${activeTag}.` :
@@ -711,7 +740,7 @@ export default function Dashboard() {
                         </div>
                       </div>
                     )}
-                    {!hasPinnedDivider && (
+                    {!hasPinnedDivider && sortedNotes.length > 0 && (
                       <div key="flat-grid" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                         {sortedNotes.map((note) => (
                           <motion.div key={note.id} layout initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.2 }}>
@@ -721,6 +750,74 @@ export default function Dashboard() {
                       </div>
                     )}
                   </AnimatePresence>
+
+                  {/* Deleted todos section — only shown in bin view */}
+                  {currentView === "bin" && deletedTodos.length > 0 && (
+                    <div>
+                      {sortedNotes.length > 0 && (
+                        <div className="border-t border-white/5 my-2" />
+                      )}
+                      <p className="text-[11px] font-semibold text-white/30 uppercase tracking-widest mb-3 px-1">Tasks</p>
+                      <AnimatePresence mode="popLayout">
+                        <div className="flex flex-col gap-2">
+                          {deletedTodos.map((todo) => {
+                            const priorityColor: Record<string, string> = {
+                              urgent: "text-red-400 bg-red-500/10 border-red-500/20",
+                              high: "text-orange-400 bg-orange-500/10 border-orange-500/20",
+                              medium: "text-yellow-400 bg-yellow-500/10 border-yellow-500/20",
+                              low: "text-blue-400 bg-blue-500/10 border-blue-500/20",
+                            };
+                            const prioClass = priorityColor[todo.priority] ?? priorityColor.medium;
+                            return (
+                              <motion.div
+                                key={todo.id}
+                                layout
+                                initial={{ opacity: 0, y: -6 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.95 }}
+                                transition={{ duration: 0.18 }}
+                                className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/[0.03] border border-white/[0.07] hover:bg-white/[0.06] transition-colors group"
+                              >
+                                <CheckSquare size={15} className="text-white/20 shrink-0" />
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm text-white/70 truncate">{todo.title}</p>
+                                  {todo.description && (
+                                    <p className="text-xs text-white/30 truncate mt-0.5">{todo.description}</p>
+                                  )}
+                                </div>
+                                <span className={`shrink-0 text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full border ${prioClass}`}>
+                                  {todo.priority}
+                                </span>
+                                <div className="flex items-center gap-1.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <button
+                                    onClick={() => handleRestoreTodo(todo.id)}
+                                    title="Restore task"
+                                    className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/20 transition-colors"
+                                  >
+                                    Restore
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteTodoPermanent(todo.id)}
+                                    title="Delete permanently"
+                                    className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-colors"
+                                  >
+                                    Delete
+                                  </button>
+                                </div>
+                              </motion.div>
+                            );
+                          })}
+                        </div>
+                      </AnimatePresence>
+                    </div>
+                  )}
+
+                  {/* Bin is totally empty */}
+                  {currentView === "bin" && sortedNotes.length === 0 && deletedTodos.length === 0 && (
+                    <div className="flex flex-col items-center justify-center h-64 text-center p-4">
+                      <p className="text-white/40 text-sm max-w-sm">{viewConfig[currentView].emptyText}</p>
+                    </div>
+                  )}
                 </div>
               )}
             </motion.div>
@@ -820,9 +917,9 @@ export default function Dashboard() {
         />
       )}
 
-      {/* Mobile FAB */}
+      {/* Mobile FAB — hidden on todos and bin views where it has no action */}
       <button onClick={handleNewNote}
-        className="md:hidden fixed bottom-6 right-6 z-40 group w-14 h-14 rounded-full bg-primary shadow-xl shadow-purple-500/30 flex items-center justify-center text-white transition-all duration-200 hover:scale-110 hover:shadow-purple-500/50 active:scale-95 overflow-hidden"
+        className={`md:hidden fixed bottom-6 right-6 z-40 group w-14 h-14 rounded-full bg-primary shadow-xl shadow-purple-500/30 flex items-center justify-center text-white transition-all duration-200 hover:scale-110 hover:shadow-purple-500/50 active:scale-95 overflow-hidden ${currentView === "todos" || currentView === "bin" ? "hidden" : ""}`}
         aria-label="New Note">
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute -inset-full top-0 block w-1/2 h-full bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12 transform -translate-x-full transition-transform duration-700 ease-out group-hover:translate-x-[400%]" />
