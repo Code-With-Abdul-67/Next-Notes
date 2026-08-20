@@ -12,16 +12,25 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   session: {
-    strategy: "database",
-    // Session expires after 7 days of inactivity
-    maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
+    strategy: "jwt",
+    maxAge: 7 * 24 * 60 * 60, // 7 days
   },
   callbacks: {
-    async session({ session, user }) {
-      if (session.user && user) {
-        (session.user as { id?: string }).id = user.id;
+    async session({ session, token }) {
+      if (session.user && token.sub) {
+        (session.user as { id?: string }).id = token.sub;
       }
       return session;
+    },
+    async jwt({ token, user }) {
+      if (user) {
+        token.sub = user.id;
+      }
+      return token;
+    },
+    async signIn() {
+      // Always allow sign in — actual DB errors will surface naturally
+      return true;
     },
   },
   pages: {
