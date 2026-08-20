@@ -86,9 +86,7 @@ export default function NoteCard({
         .trim()
     : "";
 
-  const contentPreview = plainPreview
-    ? plainPreview.length > 100 ? plainPreview.slice(0, 100) + "…" : plainPreview
-    : "No additional text";
+  const contentPreview = plainPreview || "No additional text";
 
   const wordCount = note.content.trim() ? note.content.trim().split(/\s+/).length : 0;
 
@@ -102,11 +100,10 @@ export default function NoteCard({
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.90, y: 15, transition: { duration: 0.2 } }}
       transition={{ type: "spring", stiffness: 300, damping: 25, layout: { duration: 0.25 } }}
-      className="h-full"
     >
       <div
         onClick={() => view !== "bin" && onEdit(note)}
-        className={`group relative overflow-hidden glass-card w-full flex flex-col rounded-xl border border-white/5 bg-white/5 backdrop-blur-md shadow-lg transition-all duration-300 cursor-pointer hover:bg-white/10 hover:border-white/20 hover:shadow-purple-500/5 ${
+        className={`group relative overflow-hidden glass-card w-full h-[200px] flex flex-col rounded-xl border border-white/5 bg-white/5 backdrop-blur-md shadow-lg transition-all duration-300 cursor-pointer hover:bg-white/10 hover:border-white/20 hover:shadow-purple-500/5 ${
           colorStyle ? `border-t-2 ${colorStyle.border} ${colorStyle.glow}` : ""
         }`}
       >
@@ -166,7 +163,7 @@ export default function NoteCard({
           )}
 
           {/* Body — plain text preview (stripped markdown) */}
-          <p className="text-white/60 text-xs leading-relaxed line-clamp-3 whitespace-pre-line px-4 py-1 flex-1">
+          <p className="text-white/60 text-xs leading-relaxed overflow-hidden whitespace-pre-line px-4 py-1 flex-1 [display:-webkit-box] [-webkit-line-clamp:4] [-webkit-box-orient:vertical]">
             {contentPreview}
           </p>
 
