@@ -1,4 +1,4 @@
-<h3>📝 NEXT Notes</h3>
+<h3>NEXT Notes</h3>
 
 A premium, secure, and beautifully designed note-taking workspace built with **Next.js 16**, **AES-256-GCM client-side encryption**, and a glassmorphism UI.
 
@@ -16,9 +16,9 @@ A premium, secure, and beautifully designed note-taking workspace built with **N
 - JWT session strategy with persistent login
 - Logout confirmation modal
 
-### 📒 Notes
+### 2- 📒 Notes
 - Create, edit, and delete notes with title and content
-- **Auto-save** — existing notes save automatically 1.5s after you stop typing
+- **Auto-save** — existing notes save automatically
 - **Live word & character count** in the editor
 - **Pin notes** — pinned notes sort to the top with a "Pinned / Others" section divider
 - **Duplicate notes** — one-click copy of any note
@@ -27,7 +27,12 @@ A premium, secure, and beautifully designed note-taking workspace built with **N
 - **Search** — debounced full-text search across title and content
 - **Keyboard shortcut** — `Ctrl+N` / `Cmd+N` to open new note from anywhere
 
-### 🔒 Secret Vault
+### 3- 📝 To Do Lists
+- Create, edit, and delete notes with title and content
+- Update Tasks as **Urgent, High, Medium and Low**
+- Add specific tags for **better management** of tasks
+
+### 4- 🔒 Secret Vault
 - **AES-256-GCM client-side encryption** — your vault password never leaves the browser
 - PBKDF2 key derivation with SHA-256, 100,000 iterations
 - Create, unlock, and lock the vault with a master password
@@ -37,23 +42,11 @@ A premium, secure, and beautifully designed note-taking workspace built with **N
 - Vault notes are fully encrypted before being sent to the server — the server never sees plaintext
 - Redirects to vault setup when trying to lock a note without a vault
 
-### 🗑️ Recycle Bin
+### 5- 🗑️ Recycle Bin
 - Soft-delete notes — move to bin and recover later
 - Permanently delete individual notes or empty the entire bin
 - Notes in the bin cannot be edited
-
-### 🎨 UI & UX
-- **Glassmorphism design system** — `glass-panel`, `glass-card`, `glass-input` utility classes
-- **Sheen slide animation** — `.btn-sheen` CSS utility on every button across the app
-- **Animated toasts** — vault, bin, deleted, error, success, duplicate notifications
-- **Animated mobile drawer** — sidebar slides in from left with spring physics
-- **Floating action button** — always-visible `+` button on mobile
-- **Colored nav items** — All Notes (blue), Secret Vault (amber), Recycle Bin (red)
-- **Colored header icons** — matching colors per view
-- **Empty state buttons** — "Create Note" / "Add to Vault" on mobile empty states
-- **Pinned section divider** — visual separation between pinned and other notes
-- **PWA support** — installable, service worker, web manifest
-
+  
 ---
 
 ## 🛡️ Security
