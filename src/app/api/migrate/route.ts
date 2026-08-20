@@ -2,15 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/backend/lib/prisma";
 
 // One-time migration endpoint — adds missing columns to production DB.
-// Protected by a secret token so only you can call it.
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const token = searchParams.get("token");
-
-  if (token !== process.env.NEXTAUTH_SECRET) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+export async function GET() {
   const results: string[] = [];
 
   try {
