@@ -19,8 +19,8 @@ export async function sendVaultResetEmail(toEmail: string, code: string) {
     html: `
       <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #040209; color: #F4F2F7; max-width: 480px; margin: 0 auto; padding: 40px 24px; border-radius: 16px;">
         <div style="text-align: center; margin-bottom: 32px;">
-          <div style="display: inline-flex; align-items: center; justify-content: center; width: 56px; height: 56px; background: linear-gradient(135deg, #7C3AED, #4F46E5); border-radius: 14px; margin-bottom: 16px;">
-            <span style="font-size: 24px;">🔐</span>
+          <div style="display: inline-block; width: 56px; height: 56px; background: linear-gradient(135deg, #7C3AED, #4F46E5); border-radius: 14px; margin-bottom: 16px; text-align: center; line-height: 56px;">
+            <span style="font-size: 24px; line-height: 1; vertical-align: middle;">🔐</span>
           </div>
           <h1 style="margin: 0; font-size: 22px; font-weight: 700; color: #F4F2F7;">Vault Reset Code</h1>
           <p style="margin: 8px 0 0; color: rgba(244,242,247,0.5); font-size: 14px;">NEXT Notes Secret Vault</p>
@@ -62,8 +62,8 @@ export async function sendAccountDeletionEmail(toEmail: string, code: string) {
     html: `
       <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #040209; color: #F4F2F7; max-width: 480px; margin: 0 auto; padding: 40px 24px; border-radius: 16px;">
         <div style="text-align: center; margin-bottom: 32px;">
-          <div style="display: inline-flex; align-items: center; justify-content: center; width: 56px; height: 56px; background: linear-gradient(135deg, #DC2626, #9F1239); border-radius: 14px; margin-bottom: 16px;">
-            <span style="font-size: 24px;">🗑️</span>
+          <div style="display: inline-block; width: 56px; height: 56px; background: linear-gradient(135deg, #DC2626, #9F1239); border-radius: 14px; margin-bottom: 16px; text-align: center; line-height: 56px;">
+            <span style="font-size: 24px; line-height: 1; vertical-align: middle;">🗑️</span>
           </div>
           <h1 style="margin: 0; font-size: 22px; font-weight: 700; color: #F4F2F7;">Account Deletion</h1>
           <p style="margin: 8px 0 0; color: rgba(244,242,247,0.5); font-size: 14px;">NEXT Notes Workspace</p>
