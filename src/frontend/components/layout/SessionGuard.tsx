@@ -188,7 +188,7 @@ export default function SessionGuard() {
                 </button>
                 <button
                   onClick={handleStayLoggedIn}
-                  className="btn-primary flex-1 h-10 rounded-xl text-sm"
+                  className="btn-sheen flex-1 h-10 rounded-xl text-sm font-semibold text-white bg-primary shadow-lg shadow-purple-500/20 hover:brightness-110 hover:shadow-purple-500/40 transition-all duration-200"
                 >
                   Stay logged in
                 </button>

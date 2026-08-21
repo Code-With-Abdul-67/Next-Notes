@@ -134,8 +134,8 @@ function SidebarContent({
         <div className="px-1">
           <Button
             onPress={onNewNote}
-            className={`btn-primary rounded-xl transition-all ${
-              isCollapsed ? "px-0 min-w-0 h-10 w-10" : "h-10 w-full"
+            className={`btn-sheen w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-medium shadow-lg shadow-purple-900/40 border border-purple-400/20 transition-all rounded-xl ${
+              isCollapsed ? "px-0 min-w-0 h-10" : "h-10"
             }`}
             isIconOnly={isCollapsed}
           >

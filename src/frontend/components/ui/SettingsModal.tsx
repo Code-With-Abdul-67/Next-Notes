@@ -266,7 +266,7 @@ export default function SettingsModal({
                         size="sm"
                         onPress={handleSaveName}
                         isLoading={isSavingName}
-                        className="h-9 shrink-0 btn-primary rounded-xl text-xs px-4 mb-[1px]"
+                        className="h-9 shrink-0 bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-xl text-xs px-4 shadow-md shadow-purple-600/25 mb-[1px]"
                       >
                         {nameSavedSuccess ? (
                           <span className="flex items-center gap-1 text-emerald-300">
@@ -343,7 +343,7 @@ export default function SettingsModal({
               <Button
                 size="sm"
                 onPress={() => { saveToServer(); onClose(); }}
-                className="h-8 btn-primary rounded-xl text-xs px-5"
+                className="h-8 bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-xl text-xs px-5 shadow-md shadow-purple-600/20"
               >
                 Done
               </Button>

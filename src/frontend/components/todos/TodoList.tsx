@@ -240,7 +240,7 @@ export default function TodoList({ onNotify }: TodoListProps) {
         {/* Add Task button */}
         <Button
           onPress={() => setIsAdding(true)}
-          className="btn-primary rounded-xl text-xs px-4 h-10 shrink-0 z-10"
+          className="bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-xl text-xs px-4 h-10 shadow-lg shadow-purple-600/30 shrink-0 z-10"
           startContent={<Plus size={16} />}
         >
           Add Task
@@ -331,7 +331,7 @@ export default function TodoList({ onNotify }: TodoListProps) {
                 <Button
                   type="submit"
                   isLoading={isSubmitting}
-                  className="btn-primary rounded-xl text-xs px-5 h-9 ml-auto"
+                  className="bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-xl text-xs px-5 h-9 shadow-md ml-auto"
                 >
                   Create Task
                 </Button>

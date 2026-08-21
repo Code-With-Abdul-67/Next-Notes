@@ -150,7 +150,7 @@ export default function UpdatePrompt() {
               <button
                 onClick={handleUpdate}
                 disabled={updating}
-                className="btn-primary flex-[2] h-9 rounded-xl text-xs flex items-center justify-center gap-2 disabled:opacity-70"
+                className="btn-sheen flex-[2] h-9 rounded-xl text-xs font-semibold text-white bg-primary shadow-lg shadow-purple-500/25 hover:brightness-110 transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-70"
               >
                 <RefreshCw size={13} className={updating ? "animate-spin" : ""} />
                 {updating ? "Updating…" : "Update now"}

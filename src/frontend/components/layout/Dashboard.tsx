@@ -764,7 +764,7 @@ export default function Dashboard() {
                   </p>
                   {(currentView === "all" || currentView === "vault") && !activeTag && !vaultSearchQuery && (
                     <button onClick={handleNewNote}
-                      className="md:hidden btn-primary flex items-center gap-2 px-5 h-10 rounded-xl text-sm">
+                      className="md:hidden btn-sheen flex items-center gap-2 px-5 h-10 rounded-xl bg-primary text-white text-sm font-semibold shadow-lg shadow-purple-500/20">
                       <Plus size={16} />
                       {currentView === "vault" ? "Add to Vault" : "Create Note"}
                     </button>
@@ -968,8 +968,11 @@ export default function Dashboard() {
 
       {/* Mobile FAB — hidden on todos and bin views where it has no action */}
       <button onClick={handleNewNote}
-        className={`md:hidden fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full btn-primary flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 ${currentView === "todos" || currentView === "bin" ? "hidden" : ""}`}
+        className={`md:hidden fixed bottom-6 right-6 z-40 group w-14 h-14 rounded-full bg-primary shadow-xl shadow-purple-500/30 flex items-center justify-center text-white transition-all duration-200 hover:scale-110 hover:shadow-purple-500/50 active:scale-95 overflow-hidden ${currentView === "todos" || currentView === "bin" ? "hidden" : ""}`}
         aria-label="New Note">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute -inset-full top-0 block w-1/2 h-full bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12 transform -translate-x-full transition-transform duration-700 ease-out group-hover:translate-x-[400%]" />
+        </div>
         <Plus size={24} className="relative z-10" />
       </button>
 
