@@ -49,7 +49,7 @@ export default class ErrorBoundary extends React.Component<Props, State> {
               this.setState({ hasError: false, message: "" });
               window.location.reload();
             }}
-            className="btn-sheen flex items-center gap-2 px-5 h-10 rounded-xl bg-primary text-white text-sm font-semibold shadow-lg shadow-purple-500/20 hover:brightness-110 transition-all duration-200"
+            className="btn-primary flex items-center gap-2 px-5 h-10 rounded-xl text-sm"
           >
             <RefreshCw size={15} />
             Reload App

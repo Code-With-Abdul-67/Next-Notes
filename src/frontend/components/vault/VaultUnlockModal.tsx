@@ -87,7 +87,7 @@ export default function VaultUnlockModal({ isOpen, onClose, onUnlock }: VaultUnl
                   <button
                     type="submit"
                     disabled={loading}
-                    className="btn-sheen w-full h-10 rounded-xl bg-primary text-white font-semibold shadow-lg shadow-purple-500/20 flex items-center justify-center gap-2 transition-all duration-200 hover:brightness-110 hover:shadow-purple-500/40 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="btn-primary w-full h-10 rounded-xl flex items-center justify-center gap-2"
                   >
                     {loading ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
                     Unlock & Move to Vault

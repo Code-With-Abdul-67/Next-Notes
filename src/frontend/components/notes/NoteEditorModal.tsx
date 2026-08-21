@@ -529,7 +529,7 @@ export default function NoteEditorModal({
                   type="button"
                   onClick={handleSave}
                   disabled={isSaving}
-                  className="btn-sheen px-4 h-9 rounded-xl text-sm font-semibold text-white bg-primary shadow-lg shadow-purple-500/20 hover:brightness-110 hover:shadow-purple-500/40 transition-all duration-200 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="btn-primary px-4 h-9 rounded-xl text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSaving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
                   Save Note

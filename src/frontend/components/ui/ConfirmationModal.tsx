@@ -61,10 +61,10 @@ export default function ConfirmationModal({
               </button>
               <button
                 onClick={() => { onConfirm(); onClose(); }}
-                className={`btn-sheen px-4 h-9 rounded-xl text-sm font-semibold text-white transition-all duration-200 shadow-lg ${
+                className={`px-4 h-9 rounded-xl text-sm font-semibold transition-all duration-200 shadow-lg ${
                   isDestructive
-                    ? "bg-red-600 hover:bg-red-500 shadow-red-500/20 hover:shadow-red-500/40"
-                    : "bg-primary hover:brightness-110 shadow-purple-500/20 hover:shadow-purple-500/40"
+                    ? "btn-sheen text-white bg-red-600 hover:bg-red-500 shadow-red-500/20 hover:shadow-red-500/40"
+                    : "btn-primary"
                 }`}
               >
                 Yes, {confirmText}

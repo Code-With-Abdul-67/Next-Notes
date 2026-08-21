@@ -169,7 +169,7 @@ export default function VaultReset({ onCancel, onResetSuccess }: VaultResetProps
                   type="button"
                   onClick={handleVerifyCode}
                   disabled={isExpired || code.join("").length < 6}
-                  className="btn-sheen w-full h-10 rounded-xl bg-primary text-white font-semibold shadow-lg shadow-purple-500/20 flex items-center justify-center gap-2 transition-all duration-200 hover:brightness-110 hover:shadow-purple-500/40 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="btn-primary w-full h-10 rounded-xl flex items-center justify-center gap-2 disabled:opacity-40"
                 >
                   <ShieldCheck size={16} />
                   Verify Code
@@ -206,7 +206,7 @@ export default function VaultReset({ onCancel, onResetSuccess }: VaultResetProps
                 <button
                   type="submit"
                   disabled={loading}
-                  className="btn-sheen w-full h-10 rounded-xl bg-primary text-white font-semibold shadow-lg shadow-purple-500/20 flex items-center justify-center gap-2 transition-all duration-200 hover:brightness-110 hover:shadow-purple-500/40 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="btn-primary w-full h-10 rounded-xl flex items-center justify-center gap-2"
                 >
                   {loading ? <Loader2 size={16} className="animate-spin" /> : <ShieldCheck size={16} />}
                   Reset Vault Password

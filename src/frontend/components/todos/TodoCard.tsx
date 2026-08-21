@@ -146,7 +146,7 @@ export default function TodoCard({ todo, onToggle, onMoveToTrash, onUpdate }: To
               <div className="flex items-center gap-2">
                 <Button
                   size="sm"
-                  className="bg-purple-600 text-white text-xs h-7 rounded-lg"
+                  className="btn-primary text-xs h-7 rounded-lg px-3"
                   onPress={handleSaveEdit}
                 >
                   Save
